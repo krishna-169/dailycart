@@ -2,14 +2,27 @@
 <html lang="en">
 
 <head>
+    <meta name="theme-color" content="#adff2f">
+    <script>
+        // Register service worker for PWA support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('service-worker.js').then(function (reg) {
+                    console.log('Service worker registered.', reg);
+                }, function (err) {
+                    console.warn('Service worker registration failed:', err);
+                });
+            });
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CampusSwap | Elevate Your Fit</title>
+    <title>VEYRO | Wear What Defines You</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.min.js"></script>
+    <!-- EmailJS SDK and email.js for contact form -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
 
@@ -90,15 +103,35 @@
             color: white;
         }
 
-        .tryon-overlay {
-            cursor: grab;
-            touch-action: none;
-        }
-
-        .tryon-overlay:active {
-            cursor: grabbing;
-        }
     </style>
+    <script>
+        (function () {
+            // Provided EmailJS credentials
+            const EMAILJS_USER_ID = 'KdXa9yNjMW921AD00';
+            const EMAILJS_SERVICE_ID = 'service_vw1u27d';
+            const EMAILJS_TEMPLATE_ID = 'template_mvhz47u';
+
+            // Initialize EmailJS
+            if (window.emailjs) {
+                emailjs.init(EMAILJS_USER_ID);
+            }
+
+            // Send contact form data
+            window.sendContactFormEmail = function (name, email, subject, message) {
+                if (!window.emailjs) {
+                    alert('EmailJS SDK not loaded.');
+                    return;
+                }
+                const templateParams = {
+                    from_name: name,
+                    from_email: email,
+                    subject: subject,
+                    message: message
+                };
+                return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+            };
+        })();
+    </script>
 </head>
 
 <body>
@@ -107,11 +140,11 @@
     <div id="intro-page" class="page-section active-page">
         <div class="flex flex-col items-center justify-center text-center px-4 min-h-screen">
             <div class="space-y-6">
-                <h1 class="heading text-6xl md:text-9xl font-black tracking-tighter">CAMPUS<br><span
-                        class="text-[#adff2f]">SWAP</span></h1>
-                <p class="text-zinc-400 tracking-[0.3em] uppercase text-sm">The Student Streetwear Exchange</p>
+                <h1 class="heading text-6xl md:text-9xl font-black tracking-tighter">DAILY<br><span
+                    class="text-[#adff2f]">CART</span></h1>
+                <p class="text-zinc-400 tracking-[0.3em] uppercase text-sm">WEAR WHAT DEFINES YOU</p>
                 <p class="text-zinc-500 text-sm md:text-base italic max-w-xl mx-auto">
-                    Trade the old, wear the new. Campus style never stands still.
+                    Premium print-on-demand streetwear, made for your point of view.
                 </p>
                 <div class="pt-10">
                     <button onclick="showPage('home-page')"
@@ -124,18 +157,16 @@
 
     <!-- NAVBAR -->
     <nav id="main-nav" class="hidden sticky top-0 z-50 glass px-6 py-4 flex justify-between items-center">
-        <h1 onclick="showPage('home-page')" class="heading text-xl font-black cursor-pointer">C<span
-                class="text-[#adff2f]">S</span></h1>
+        <h1 onclick="showPage('home-page')" class="heading text-xl font-black cursor-pointer">VE<span
+            class="text-[#adff2f]">Y</span>RO</h1>
         <div class="flex items-center space-x-6">
-            <div class="hidden md:flex items-center bg-zinc-900 border border-zinc-800 rounded-full px-3 py-1">
+                <div class="hidden md:flex items-center bg-zinc-900 border border-zinc-800 rounded-full px-3 py-1">
                 <i class="fa-solid fa-magnifying-glass text-zinc-500 text-xs mr-2"></i>
                 <input id="product-search" type="text" placeholder="Search products..."
                     class="bg-transparent border-0 text-sm w-48 focus:ring-0">
+                <i id="location-search-btn" class="fa-solid fa-location-dot text-zinc-500 text-xs ml-3 cursor-pointer"
+                    title="Location"></i>
             </div>
-            <button id="sell-nav-btn" onclick="showPage('sell-page')"
-                class="hidden text-xs font-bold border border-zinc-700 px-4 py-1 rounded-full hover:border-[#adff2f]">SELL</button>
-            <button id="tryon-nav-btn" onclick="openTryOnStudio()"
-                class="text-xs font-bold border border-zinc-700 px-4 py-1 rounded-full hover:border-[#adff2f]">TRY-ON</button>
             <i onclick="showPage('cart-page')" class="fa-solid fa-bag-shopping cursor-pointer hover:text-[#adff2f]"
                 title="Cart"></i>
             <i onclick="showPage('liked-page')" class="fa-regular fa-heart cursor-pointer hover:text-[#adff2f]"></i>
@@ -149,98 +180,6 @@
         </div>
     </nav>
 
-    <!-- TRY-ON PAGE -->
-    <div id="tryon-page" class="page-section">
-
-        <div class="space-y-3">
-            <label class="text-xs text-zinc-400">Try-on from cart</label>
-            <select id="tryon-item-select" class="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-sm">
-                <option value="">Cart is empty</option>
-            </select>
-            <button id="tryon-item-apply"
-                class="w-full border border-zinc-700 py-2 rounded-xl text-xs font-bold hover:border-[#adff2f]">APPLY
-                SELECTED ITEM</button>
-            <label class="flex items-center gap-2 text-xs text-zinc-400">
-                <input id="tryon-auto" type="checkbox" class="accent-[#adff2f]" checked>
-                Auto-fit to body/hand
-            </label>
-        </div>
-        <div class="p-6 max-w-6xl mx-auto">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h2 class="heading text-3xl">Try-On Studio</h2>
-                    <p id="tryon-modal-name" class="text-zinc-400 text-sm mt-1"></p>
-                </div>
-                <button id="tryon-modal-close"
-                    class="text-xs font-bold border border-zinc-700 px-4 py-2 rounded-full hover:border-[#adff2f]">BACK</button>
-            </div>
-            <div class="glass rounded-3xl overflow-hidden border border-zinc-800">
-                <div class="grid grid-cols-1 lg:grid-cols-2">
-                    <div class="bg-zinc-900 p-6">
-                        <div id="tryon-preview"
-                            class="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-zinc-800">
-                            <video id="tryon-video" class="w-full h-full object-cover" autoplay playsinline
-                                muted></video>
-                            <img id="tryon-overlay" src="" alt="" crossorigin="anonymous"
-                                class="tryon-overlay absolute left-1/2 top-1/2 select-none" />
-                        </div>
-                        <p id="tryon-status" class="text-xs text-zinc-500 mt-3">Camera idle</p>
-                    </div>
-                    <div class="p-8 space-y-6">
-                        <div>
-                            <h3 class="heading text-2xl">Virtual Try-On</h3>
-                            <p class="text-zinc-400 text-sm mt-2">Use your camera and drag the item into position. PNGs
-                                with transparent backgrounds look best.</p>
-                        </div>
-
-                        <div class="space-y-3">
-                            <label class="text-xs text-zinc-400">Overlay image (optional)</label>
-                            <input id="tryon-file" type="file" accept="image/*" class="w-full text-xs" />
-                        </div>
-
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-xs text-zinc-400">Scale</label>
-                                <input id="tryon-scale" type="range" min="0.5" max="2" step="0.01" value="1"
-                                    class="w-full">
-                            </div>
-                            <div>
-                                <label class="text-xs text-zinc-400">Rotate</label>
-                                <input id="tryon-rotate" type="range" min="-30" max="30" step="1" value="0"
-                                    class="w-full">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-xs text-zinc-400">Move X</label>
-                                    <input id="tryon-offset-x" type="range" min="-150" max="150" step="1" value="0"
-                                        class="w-full">
-                                </div>
-                                <div>
-                                    <label class="text-xs text-zinc-400">Move Y</label>
-                                    <input id="tryon-offset-y" type="range" min="-150" max="150" step="1" value="0"
-                                        class="w-full">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <button id="tryon-start"
-                                class="w-full bg-[#adff2f] text-black py-3 rounded-xl font-bold">START CAMERA</button>
-                            <button id="tryon-stop"
-                                class="w-full border border-zinc-700 py-3 rounded-xl font-bold hover:border-[#adff2f]">STOP
-                                CAMERA</button>
-                            <button id="tryon-snap"
-                                class="w-full border border-zinc-700 py-3 rounded-xl font-bold hover:border-[#adff2f]">SNAPSHOT</button>
-                            <button id="tryon-reset"
-                                class="w-full border border-zinc-700 py-3 rounded-xl font-bold hover:border-[#adff2f]">RESET</button>
-                        </div>
-                        <canvas id="tryon-canvas" class="hidden"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- HOME PAGE -->
     <div id="home-page" class="page-section">
         <div class="p-6">
@@ -248,7 +187,10 @@
                 class="h-[60vh] flex items-center justify-center bg-zinc-900 rounded-3xl mb-12 overflow-hidden relative">
                 <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=1200&q=80"
                     class="absolute w-full h-full object-cover opacity-50">
-                <h2 class="relative heading text-4xl md:text-6xl text-center">NEW SEASON<br>DROPPED</h2>
+                <div class="relative text-center">
+                    <p class="text-[#adff2f] text-xs tracking-[0.35em] mb-4">VEYRO / 2026 COLLECTION</p>
+                    <h2 class="heading text-4xl md:text-6xl">NEW SEASON<br>DROPPED</h2>
+                </div>
             </div>
             <div class="md:hidden mb-6">
                 <div class="flex items-center bg-zinc-900 border border-zinc-800 rounded-full px-4 py-2">
@@ -258,104 +200,7 @@
                 </div>
             </div>
             <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div class="group cursor-pointer" data-product="Oversized Graphic Tee" data-price="35"
-                    data-tags="tee graphic oversized"
-                    data-description="Relaxed-fit cotton tee with bold graphic print and drop shoulders." data-size="M"
-                    data-condition="New" data-color="Black" data-material="100% Cotton" data-location="Gudlavalleru"
-                    data-seller-phone="919885751835"
-                    data-tryon="https://images.unsplash.com/photo-1554568218-0f1715e72254?auto=format&fit=crop&w=500&q=80">
-                    <div
-                        class="aspect-[3/4] bg-zinc-900 rounded-2xl mb-4 overflow-hidden border border-zinc-800 hover:border-[#adff2f] transition">
-                        <img src="https://images.unsplash.com/photo-1554568218-0f1715e72254?auto=format&fit=crop&w=500&q=80"
-                            class="w-full h-full object-cover group-hover:scale-105 transition">
-                    </div>
-                    <h3 class="font-bold">Oversized Graphic Tee</h3>
-                    <p class="text-[#adff2f]">₹35</p>
-                </div>
-                <div class="group cursor-pointer" data-product="Varsity Jacket" data-price="85"
-                    data-tags="jacket varsity outerwear"
-                    data-description="Classic varsity silhouette with ribbed cuffs and a soft brushed lining."
-                    data-size="L" data-condition="Like New" data-color="Navy" data-material="Wool Blend"
-                    data-location="Gudlavalleru" data-seller-phone="919885751835"
-                    data-tryon="https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=500&q=80">
-                    <div
-                        class="aspect-[3/4] bg-zinc-900 rounded-2xl mb-4 overflow-hidden border border-zinc-800 hover:border-[#adff2f] transition">
-                        <img src="https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=500&q=80"
-                            class="w-full h-full object-cover group-hover:scale-105 transition">
-                    </div>
-                    <h3 class="font-bold">Varsity Jacket</h3>
-                    <p class="text-[#adff2f]">₹85</p>
-                </div>
-                <div class="group cursor-pointer" data-product="Cargo Pants" data-price="45"
-                    data-tags="pants cargo bottoms"
-                    data-description="Utility cargo pants with tapered fit and reinforced stitching." data-size="L"
-                    data-condition="New" data-color="Olive" data-material="Cotton Twill" data-location="Gudlavalleru"
-                    data-seller-phone="919885751835"
-                    data-tryon="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80">
-                    <div
-                        class="aspect-[3/4] bg-zinc-900 rounded-2xl mb-4 overflow-hidden border border-zinc-800 hover:border-[#adff2f] transition">
-                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=500&q=80"
-                            class="w-full h-full object-cover group-hover:scale-105 transition">
-                    </div>
-                    <h3 class="font-bold">Cargo Pants</h3>
-                    <p class="text-[#adff2f]">₹45</p>
-                </div>
-                <div class="group cursor-pointer" data-product="Designer Sneakers" data-price="120"
-                    data-tags="sneakers shoes footwear"
-                    data-description="Premium sneakers with cushioned insole and breathable mesh." data-size="9"
-                    data-condition="New" data-color="White" data-material="Leather + Mesh" data-location="Gudlavalleru"
-                    data-seller-phone="919885751835"
-                    data-tryon="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=500&q=80">
-                    <div
-                        class="aspect-[3/4] bg-zinc-900 rounded-2xl mb-4 overflow-hidden border border-zinc-800 hover:border-[#adff2f] transition">
-                        <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=500&q=80"
-                            class="w-full h-full object-cover group-hover:scale-105 transition">
-                    </div>
-                    <h3 class="font-bold">Designer Sneakers</h3>
-                    <p class="text-[#adff2f]">₹120</p>
-                </div>
-                <div class="group cursor-pointer" data-product="Minimalist Watch" data-price="90"
-                    data-tags="watch accessories"
-                    data-description="Slim stainless steel watch with clean dial and leather strap."
-                    data-size="One Size" data-condition="New" data-color="Black" data-material="Stainless Steel"
-                    data-location="Gudlavalleru" data-seller-phone="919885751835"
-                    data-tryon="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=500&q=80">
-                    <div
-                        class="aspect-[3/4] bg-zinc-900 rounded-2xl mb-4 overflow-hidden border border-zinc-800 hover:border-[#adff2f] transition">
-                        <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=500&q=80"
-                            class="w-full h-full object-cover group-hover:scale-105 transition">
-                    </div>
-                    <h3 class="font-bold">Minimalist Watch</h3>
-                    <p class="text-[#adff2f]">₹90</p>
-                </div>
-                <div class="group cursor-pointer" data-product="Retro Sunglasses" data-price="55"
-                    data-tags="sunglasses eyewear accessories"
-                    data-description="Tinted lenses with a bold, retro frame." data-size="One Size"
-                    data-condition="Like New" data-color="Amber" data-material="Acetate" data-location="Gudlavalleru"
-                    data-seller-phone="919885751835"
-                    data-tryon="https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=500&q=80">
-                    <div
-                        class="aspect-[3/4] bg-zinc-900 rounded-2xl mb-4 overflow-hidden border border-zinc-800 hover:border-[#adff2f] transition">
-                        <img src="https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=500&q=80"
-                            class="w-full h-full object-cover group-hover:scale-105 transition">
-                    </div>
-                    <h3 class="font-bold">Retro Sunglasses</h3>
-                    <p class="text-[#adff2f]">₹55</p>
-                </div>
-                <div class="group cursor-pointer" data-product="Canvas Backpack" data-price="75"
-                    data-tags="backpack bag accessories"
-                    data-description="Durable canvas backpack with padded straps and laptop sleeve." data-size="20L"
-                    data-condition="New" data-color="Sand" data-material="Canvas" data-location="Gudlavalleru"
-                    data-seller-phone="919885751835"
-                    data-tryon="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=500&q=80">
-                    <div
-                        class="aspect-[3/4] bg-zinc-900 rounded-2xl mb-4 overflow-hidden border border-zinc-800 hover:border-[#adff2f] transition">
-                        <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=500&q=80"
-                            class="w-full h-full object-cover group-hover:scale-105 transition">
-                    </div>
-                    <h3 class="font-bold">Canvas Backpack</h3>
-                    <p class="text-[#adff2f]">₹75</p>
-                </div>
+                <!-- No default products. Items will be loaded dynamically or shown after user action. -->
             </div>
             <div id="search-empty" class="hidden text-center text-zinc-500 mt-8">No products match your search.</div>
         </div>
@@ -367,7 +212,7 @@
             <div class="glass p-10 rounded-3xl w-full max-w-md">
                 <div class="text-center mb-2">
                     <h1 class="heading text-4xl mb-2">C<span class="text-[#adff2f]">S</span></h1>
-                    <p class="text-zinc-500 text-sm mb-8">CampusSwap Student Portal</p>
+                    <p class="text-zinc-500 text-sm mb-8">VEYRO customer account</p>
                 </div>
 
                 <h2 class="heading text-2xl mb-8">WELCOME BACK</h2>
@@ -376,8 +221,7 @@
                         class="w-full p-4 rounded-xl" autocomplete="email">
                     <input id="login-password" type="password" placeholder="Password (optional)"
                         class="w-full p-4 rounded-xl" autocomplete="current-password">
-                    <input id="login-otp" type="text" inputmode="numeric" placeholder="OTP Code (optional)"
-                        class="w-full p-4 rounded-xl">
+                    <!-- OTP input removed as per request, functionality remains in JS -->
                     <button onclick="loginUser()"
                         class="w-full bg-white text-black py-4 rounded-xl font-bold hover:bg-opacity-90 transition">SEND
                         LINK / VERIFY</button>
@@ -410,7 +254,7 @@
             <div class="glass p-10 rounded-3xl w-full max-w-md">
                 <div class="text-center mb-2">
                     <h1 class="heading text-4xl mb-2">C<span class="text-[#adff2f]">S</span></h1>
-                    <p class="text-zinc-500 text-sm mb-8">Join the student streetwear community</p>
+                    <p class="text-zinc-500 text-sm mb-8">Join the VEYRO streetwear community</p>
                 </div>
 
                 <h2 class="heading text-2xl mb-8">JOIN THE SQUAD</h2>
@@ -418,18 +262,15 @@
                     <input type="text" placeholder="Full Name" class="w-full p-4 rounded-xl">
                     <input id="signup-email" type="email" placeholder="Email (e.g., you@gmail.com)"
                         class="w-full p-4 rounded-xl" autocomplete="email">
-                    <input id="signup-password" type="password" placeholder="Create password (min 6 chars)"
-                        class="w-full p-4 rounded-xl" autocomplete="new-password">
-                    <input id="signup-otp" type="text" inputmode="numeric" placeholder="OTP Code (optional)"
-                        class="w-full p-4 rounded-xl">
+                    <!-- Password and OTP fields removed as per request, functionality remains in JS -->
 
                     <div class="flex items-start space-x-2 mt-2">
                         <input type="checkbox" id="terms" class="mt-1">
                         <label for="terms" class="text-xs text-zinc-400">
-                            I agree to CampusSwap's
-                            <span class="text-[#adff2f] cursor-pointer" onclick="showTerms()">Terms of Service</span>
+                            I agree to VEYRO's
+                            <span class="text-[#adff2f]">Terms of Service</span>
                             and
-                            <span class="text-[#adff2f] cursor-pointer" onclick="showPrivacy()">Privacy Policy</span>
+                            <span class="text-[#adff2f]">Privacy Policy</span>
                         </label>
                     </div>
 
@@ -452,8 +293,32 @@
         </div>
     </div>
 
+    <!-- PROFILE EDIT MODAL -->
+    <div id="edit-profile-modal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/60">
+        <div class="bg-zinc-900 rounded-2xl p-8 w-full max-w-md shadow-2xl relative">
+            <button id="edit-profile-close"
+                class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl">&times;</button>
+            <h2 class="heading text-xl mb-6">Edit Profile</h2>
+            <div class="space-y-4">
+                <input id="edit-profile-name" type="text" placeholder="Full Name" class="w-full p-4 rounded-xl">
+                <input id="edit-profile-location" type="text" placeholder="Location" class="w-full p-4 rounded-xl">
+            </div>
+            <button id="edit-profile-save"
+                class="mt-6 w-full bg-[#adff2f] text-black py-3 rounded-xl font-bold hover:opacity-90 transition">Save
+                Changes</button>
+        </div>
+    </div>
+
     <!-- PROFILE PAGE -->
     <div id="profile-page" class="page-section">
+        <!-- Order History & Tracking -->
+        <div class="glass p-6 rounded-2xl mb-8">
+            <h4 class="font-bold mb-4 border-b border-zinc-800 pb-3">Order History & Tracking</h4>
+            <div id="order-history-list" class="space-y-4">
+                <!-- Orders will be dynamically loaded here -->
+            </div>
+            <div id="order-history-empty" class="text-zinc-500 text-sm">No orders yet.</div>
+        </div>
         <div class="p-6 max-w-6xl mx-auto">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
                 <div class="flex items-center space-x-6 mb-6 md:mb-0">
@@ -462,9 +327,8 @@
                         JD</div>
                     <div>
                         <h2 id="profile-name" class="heading text-2xl">John Doe</h2>
-                        <p id="profile-meta" class="text-zinc-500">Student at State University</p>
+                        <p id="profile-meta" class="text-zinc-500">VEYRO customer</p>
                         <p id="profile-email" class="text-zinc-400 text-sm mt-1">Email: —</p>
-                        <p id="profile-phone" class="text-zinc-400 text-sm">Phone: —</p>
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3">
@@ -482,40 +346,6 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="glass p-6 rounded-2xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-bold">Active Listings</h4>
-                        <span id="active-listings-count"
-                            class="bg-[#adff2f] text-black text-xs font-bold px-3 py-1 rounded-full">0</span>
-                    </div>
-                    <p class="text-zinc-500 text-sm mb-4">You haven't listed any items for swap yet.</p>
-                    <button onclick="startSelling()"
-                        class="text-xs font-bold border border-zinc-700 px-4 py-2 rounded-full w-full hover:border-[#adff2f] transition">START
-                        SELLING</button>
-                </div>
-
-                <div class="glass p-6 rounded-2xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="font-bold">Recent Purchases</h4>
-                        <span class="bg-zinc-800 text-white text-xs font-bold px-3 py-1 rounded-full">2</span>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="text-sm font-bold">Vintage North Face Jacket</p>
-                                <p class="text-zinc-500 text-xs">Oct 15, 2023</p>
-                            </div>
-                            <span class="text-[#adff2f] font-bold">₹120</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="text-sm font-bold">Graphic Hoodie</p>
-                                <p class="text-zinc-500 text-xs">Oct 10, 2023</p>
-                            </div>
-                            <span class="text-[#adff2f] font-bold">₹65</span>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="glass p-6 rounded-2xl">
                     <div class="flex justify-between items-center mb-4">
@@ -537,26 +367,43 @@
             </div>
 
             <div class="glass p-6 rounded-2xl">
-                <h4 class="font-bold mb-4 border-b border-zinc-800 pb-3">Your Swap Stats</h4>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="text-center p-4">
-                        <p class="text-3xl font-bold text-[#adff2f]">12</p>
-                        <p class="text-zinc-500 text-sm">Items Viewed</p>
-                    </div>
-                    <div class="text-center p-4">
-                        <p class="text-3xl font-bold">5</p>
-                        <p class="text-zinc-500 text-sm">Items Liked</p>
-                    </div>
-                    <div class="text-center p-4">
-                        <p class="text-3xl font-bold">2</p>
-                        <p class="text-zinc-500 text-sm">Purchases</p>
-                    </div>
-                    <div class="text-center p-4">
-                        <p class="text-3xl font-bold">0</p>
-                        <p class="text-zinc-500 text-sm">Items Sold</p>
-                    </div>
-                </div>
+                <h4 class="font-bold mb-4 border-b border-zinc-800 pb-3">VEYRO Stats</h4>
+                <div id="veyro-stats-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
             </div>
+            <script>
+                // --- Dynamic VEYRO Stats Rendering ---
+                function renderVeyroStats() {
+                    // Example: Replace with real stats from backend or user actions
+                    const stats = {
+                        viewed: window.veyroStatsViewed || 0,
+                        liked: likedItems.length,
+                        purchases: window.veyroStatsPurchases || 0,
+                        sold: window.veyroStatsSold || 0
+                    };
+                    const grid = document.getElementById('veyro-stats-grid');
+                    if (!grid) return;
+                    grid.innerHTML = `
+                <div class="text-center p-4">
+                    <p class="text-3xl font-bold text-[#adff2f]">${stats.viewed}</p>
+                    <p class="text-zinc-500 text-sm">Items Viewed</p>
+                </div>
+                <div class="text-center p-4">
+                    <p class="text-3xl font-bold">${stats.liked}</p>
+                    <p class="text-zinc-500 text-sm">Wishlist Items</p>
+                </div>
+                <div class="text-center p-4">
+                    <p class="text-3xl font-bold">${stats.purchases}</p>
+                    <p class="text-zinc-500 text-sm">Items Purchased</p>
+                </div>
+                <div class="text-center p-4">
+                    <p class="text-3xl font-bold">${stats.sold}</p>
+                    <p class="text-zinc-500 text-sm">Total Spent</p>
+                </div>
+            `;
+                }
+                // Call on page load and after relevant actions
+                document.addEventListener('DOMContentLoaded', renderVeyroStats);
+            </script>
 
             <div class="glass p-6 rounded-2xl mt-6">
                 <h4 class="font-bold mb-4 border-b border-zinc-800 pb-3">Set Password</h4>
@@ -572,91 +419,6 @@
                     PASSWORD</button>
             </div>
 
-            <div class="glass p-6 rounded-2xl mt-6">
-                <h4 class="font-bold mb-4 border-b border-zinc-800 pb-3">Phone Number</h4>
-                <p class="text-zinc-500 text-sm mb-4">Add a phone number for seller contact.</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input id="profile-phone-input" type="tel" placeholder="Phone (e.g., +911234567890)"
-                        class="w-full p-4 rounded-xl">
-                </div>
-                <button onclick="setProfilePhone()"
-                    class="mt-4 w-full md:w-auto bg-[#adff2f] text-black py-3 px-6 rounded-xl font-bold hover:opacity-90 transition">SAVE
-                    PHONE</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SELL PAGE -->
-    <div id="sell-page" class="page-section">
-        <div class="p-6 max-w-3xl mx-auto">
-            <div class="text-center mb-8">
-                <h2 class="heading text-3xl mb-3">SELL AN ITEM</h2>
-                <p class="text-zinc-400">Add product details so buyers can find and contact you fast.</p>
-            </div>
-            <div class="glass p-8 rounded-3xl">
-                <form id="sell-form" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input id="sell-name" type="text" placeholder="Product Name" class="w-full p-4 rounded-xl"
-                            required>
-                        <input id="sell-price" type="number" min="1" step="0.01" placeholder="Price (INR)"
-                            class="w-full p-4 rounded-xl" required>
-                        <input id="sell-tags" type="text" placeholder="Tags (tee, jacket, sneakers, watch, bag)"
-                            list="sell-tags-list" class="w-full p-4 rounded-xl">
-                        <datalist id="sell-tags-list">
-                            <option value="tops"></option>
-                            <option value="outerwear"></option>
-                            <option value="bottoms"></option>
-                            <option value="footwear"></option>
-                            <option value="accessories"></option>
-                            <option value="bags"></option>
-                            <option value="watches"></option>
-                            <option value="eyewear"></option>
-                            <option value="jewelry"></option>
-                            <option value="belts"></option>
-                            <option value="hats"></option>
-                            <option value="scarves"></option>
-                        </datalist>
-                        <select id="sell-category"
-                            class="w-full p-4 rounded-xl text-white bg-zinc-900 border border-zinc-800 text-sm md:text-base">
-                            <option value="">Select category</option>
-                            <option value="tops">Tops</option>
-                            <option value="outerwear">Outerwear</option>
-                            <option value="bottoms">Bottoms</option>
-                            <option value="footwear">Footwear</option>
-                            <option value="accessories">Accessories</option>
-                            <option value="bags">Bags</option>
-                            <option value="watches">Watches</option>
-                            <option value="eyewear">Eyewear</option>
-                            <option value="jewelry">Jewelry</option>
-                            <option value="belts">Belts</option>
-                            <option value="hats">Hats</option>
-                            <option value="scarves">Scarves</option>
-                        </select>
-                        <p class="md:col-span-2 text-xs text-zinc-400">Categories: Tops, Outerwear, Bottoms, Footwear,
-                            Accessories, Bags, Watches, Eyewear, Jewelry, Belts, Hats, Scarves.</p>
-                        <input id="sell-size" type="text" placeholder="Size (M, L, 9)" class="w-full p-4 rounded-xl">
-                        <input id="sell-condition" type="text" placeholder="Condition (New, Like New, Used)"
-                            class="w-full p-4 rounded-xl">
-                        <input id="sell-color" type="text" placeholder="Color" class="w-full p-4 rounded-xl">
-                        <input id="sell-material" type="text" placeholder="Material" class="w-full p-4 rounded-xl">
-                        <input id="sell-location" type="text" placeholder="Location" class="w-full p-4 rounded-xl">
-                        <input id="sell-phone" type="tel" placeholder="Seller Phone (for call/WhatsApp)"
-                            class="w-full p-4 rounded-xl" required>
-                        <input id="sell-image" type="url" placeholder="Image URL (optional)"
-                            class="w-full p-4 rounded-xl">
-                        <div class="md:col-span-2 space-y-2">
-                            <input id="sell-images" type="file" accept="image/*" multiple class="w-full p-4 rounded-xl">
-                            <p class="text-xs text-zinc-400">Note: Include at least one transparent PNG for best try-on
-                                results.</p>
-                        </div>
-                    </div>
-                    <textarea id="sell-description" rows="4" placeholder="Product Description"
-                        class="w-full p-4 rounded-xl" required></textarea>
-                    <button type="submit"
-                        class="w-full bg-[#adff2f] text-black py-4 rounded-xl font-bold hover:opacity-90 transition">LIST
-                        ITEM</button>
-                </form>
-            </div>
         </div>
     </div>
 
@@ -693,7 +455,7 @@
                             <i class="fa-solid fa-envelope text-[#adff2f] text-xl mt-1"></i>
                             <div>
                                 <p class="font-bold mb-1">Email</p>
-                                <p class="text-zinc-400 text-sm">lingamallujaya169@gmail.com</p>
+                                <p class="text-zinc-400 text-sm">trendybazaar.help@gmail.com</p>
                             </div>
                         </div>
 
@@ -714,7 +476,7 @@
                         </div>
 
                         <div class="pt-4 border-t border-zinc-800">
-                            <h4 class="font-bold mb-3">CampusSwap HQ</h4>
+                            <h4 class="font-bold mb-3">VEYRO Support</h4>
                             <p class="text-zinc-400 text-sm">Gudlavalleru-521356<br>Near Ram Fitness</p>
                         </div>
                     </div>
@@ -726,7 +488,7 @@
     <!-- LIKED PAGE -->
     <div id="liked-page" class="page-section">
         <div class="p-6">
-            <h2 class="heading text-2xl mb-8">YOUR WISHLIST</h2>
+                <h2 class="heading text-2xl mb-8">SAVED BY YOU</h2>
             <div id="liked-items" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
             <div id="liked-empty" class="text-center text-zinc-500 mt-6 hidden">No liked items yet.</div>
         </div>
@@ -740,9 +502,6 @@
                     <h2 class="heading text-2xl">YOUR CART</h2>
                     <span id="cart-count" class="text-xs text-zinc-500">0 items</span>
                 </div>
-                <button id="cart-tryon-btn"
-                    class="text-xs font-bold border border-zinc-700 px-4 py-2 rounded-full hover:border-[#adff2f]">TRY
-                    CART</button>
             </div>
 
             <div id="cart-items" class="space-y-4"></div>
@@ -760,6 +519,47 @@
                 <div class="flex items-center justify-between border-t border-zinc-800 pt-4">
                     <p class="text-sm text-zinc-400">Total</p>
                     <p id="cart-total" class="text-[#adff2f] text-xl font-bold">₹0</p>
+                </div>
+                <button id="checkout-open" onclick="openCheckout()"
+                    class="w-full mt-6 bg-[#adff2f] text-black py-4 rounded-xl font-bold">CHECKOUT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKOUT PAGE -->
+    <div id="checkout-page" class="page-section">
+        <div class="p-6 max-w-5xl mx-auto">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <p class="text-[#adff2f] text-xs tracking-[0.3em] mb-2">VEYRO / SECURE CHECKOUT</p>
+                    <h2 class="heading text-2xl">YOUR DETAILS</h2>
+                </div>
+                <button onclick="showPage('cart-page')" class="text-sm text-zinc-400 hover:text-white">Back to cart</button>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
+                <form id="checkout-form" class="glass p-6 rounded-2xl space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input id="checkout-name" required type="text" placeholder="Full name" class="w-full p-4 rounded-xl" autocomplete="name">
+                        <input id="checkout-email" required type="email" placeholder="Email address" class="w-full p-4 rounded-xl" autocomplete="email">
+                        <input id="checkout-phone" required type="tel" placeholder="Phone number" class="w-full p-4 rounded-xl" autocomplete="tel">
+                        <input id="checkout-postal-code" required type="text" inputmode="numeric" pattern="[0-9]{4,10}" placeholder="Postal code" class="w-full p-4 rounded-xl" autocomplete="postal-code">
+                    </div>
+                    <input id="checkout-address" required type="text" placeholder="Full shipping address" class="w-full p-4 rounded-xl" autocomplete="street-address">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <input id="checkout-city" required type="text" placeholder="City" class="w-full p-4 rounded-xl" autocomplete="address-level2">
+                        <input id="checkout-state" required type="text" placeholder="State" class="w-full p-4 rounded-xl" autocomplete="address-level1">
+                        <input id="checkout-country" required type="text" value="India" placeholder="Country" class="w-full p-4 rounded-xl" autocomplete="country-name">
+                    </div>
+                    <div id="checkout-message" class="text-sm" role="status"></div>
+                    <button id="checkout-submit" type="submit" class="w-full bg-[#adff2f] text-black py-4 rounded-xl font-bold">CONTINUE TO PAYMENT</button>
+                </form>
+                <div class="glass p-6 rounded-2xl h-fit">
+                    <h3 class="heading text-lg mb-5">ORDER SUMMARY</h3>
+                    <div id="checkout-summary" class="space-y-3 text-sm"></div>
+                    <div class="flex items-center justify-between border-t border-zinc-800 pt-4 mt-5">
+                        <span class="text-zinc-400">Total</span>
+                        <strong id="checkout-total" class="text-[#adff2f] text-xl">₹0</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -781,49 +581,86 @@
                         class="w-full h-full object-cover aspect-[4/5] md:aspect-auto">
                 </div>
                 <div class="p-8 space-y-4">
-                    <div>
-                        <h3 id="product-modal-name" class="heading text-2xl"></h3>
-                        <p id="product-modal-price" class="text-[#adff2f] text-xl font-bold"></p>
+                    <div id="product-modal-tabs" class="flex gap-2 mb-4">
+                        <button id="product-details-tab" type="button"
+                            class="px-3 py-1 rounded bg-zinc-800 text-xs font-bold text-white">Details</button>
+                        <button id="product-reviews-tab" type="button"
+                            class="px-3 py-1 rounded bg-zinc-800 text-xs font-bold text-white">See Reviews</button>
                     </div>
-                    <p id="product-modal-description" class="text-zinc-400 text-sm"></p>
-                    <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div id="product-details-card">
                         <div>
-                            <p class="text-zinc-500">Size</p>
-                            <p id="product-modal-size" class="text-zinc-200 font-bold"></p>
+                            <h3 id="product-modal-name" class="heading text-2xl"></h3>
+                            <p id="product-modal-price" class="text-[#adff2f] text-xl font-bold"></p>
                         </div>
-                        <div>
-                            <p class="text-zinc-500">Condition</p>
-                            <p id="product-modal-condition" class="text-zinc-200 font-bold"></p>
+                        <p id="product-modal-description" class="text-zinc-400 text-sm"></p>
+                        <div class="grid grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <p class="text-zinc-500">Size</p>
+                                <select id="product-modal-size-select" class="w-full p-2 rounded-lg text-xs mt-1"></select>
+                                <p id="product-modal-size" class="hidden"></p>
+                            </div>
+                            <div>
+                                <p class="text-zinc-500">Category</p>
+                                <p id="product-modal-condition" class="text-zinc-200 font-bold"></p>
+                            </div>
+                            <div>
+                                <p class="text-zinc-500">Color</p>
+                                <select id="product-modal-color-select" class="w-full p-2 rounded-lg text-xs mt-1"></select>
+                                <p id="product-modal-color" class="hidden"></p>
+                            </div>
+                            <div>
+                                <p class="text-zinc-500">Material</p>
+                                <p id="product-modal-material" class="text-zinc-200 font-bold"></p>
+                            </div>
+                            <div>
+                                <p class="text-zinc-500">Quantity</p>
+                                <input id="product-modal-quantity" type="number" min="1" max="20" value="1" class="w-full p-2 rounded-lg text-xs mt-1">
+                                <p id="product-modal-location" class="hidden"></p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-zinc-500">Color</p>
-                            <p id="product-modal-color" class="text-zinc-200 font-bold"></p>
+                    </div>
+                    <div id="product-reviews-card" class="hidden">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span id="product-modal-rating-stars" class="text-yellow-400 text-lg"></span>
+                            <span id="product-modal-rating-value" class="text-xs text-zinc-400"></span>
+                            <span id="product-modal-rating-count" class="text-xs text-zinc-500"></span>
                         </div>
-                        <div>
-                            <p class="text-zinc-500">Material</p>
-                            <p id="product-modal-material" class="text-zinc-200 font-bold"></p>
-                        </div>
-                        <div>
-                            <p class="text-zinc-500">Location</p>
-                            <p id="product-modal-location" class="text-zinc-200 font-bold"></p>
-                        </div>
+                        <div id="product-modal-reviews-list" class="space-y-3 max-h-40 overflow-y-auto mb-2"></div>
+                        <form id="product-modal-review-form" class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs text-zinc-400">Your Rating:</label>
+                                <span id="product-modal-review-stars" class="flex gap-1"></span>
+                            </div>
+                            <textarea id="product-modal-review-text" rows="2" maxlength="300"
+                                placeholder="Write a review..."
+                                class="w-full p-2 rounded bg-zinc-900 border border-zinc-800 text-xs text-white"></textarea>
+                            <button type="submit"
+                                class="bg-[#adff2f] text-black px-4 py-2 rounded text-xs font-bold">Submit
+                                Review</button>
+                        </form>
+                        <div id="product-modal-review-message" class="text-xs mt-1"></div>
                     </div>
                     <div class="flex flex-col gap-3 pt-2">
-                        <button id="product-modal-tryon"
-                            class="w-full border border-zinc-700 py-3 rounded-xl font-bold hover:border-[#adff2f]">VIRTUAL
-                            TRY-ON</button>
                         <button id="product-modal-add"
                             class="w-full bg-[#adff2f] text-black py-3 rounded-xl font-bold">ADD TO CART</button>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <a id="product-modal-call" href="tel:"
-                                class="w-full text-center border border-zinc-700 py-3 rounded-xl font-bold hover:border-[#adff2f]">CALL
-                                SELLER</a>
+                                class="hidden w-full text-center border border-zinc-700 py-3 rounded-xl font-bold hover:border-[#adff2f]">CONTACT
+                                SUPPORT</a>
                             <a id="product-modal-whatsapp" href="" target="_blank" rel="noopener"
-                                class="w-full text-center border border-zinc-700 py-3 rounded-xl font-bold hover:border-[#adff2f]">WHATSAPP
-                                SELLER</a>
+                                class="hidden w-full text-center border border-zinc-700 py-3 rounded-xl font-bold hover:border-[#adff2f]">MESSAGE
+                                SUPPORT</a>
+                        </div>
+                        <div class="flex gap-2 mt-3">
+                            <button id="share-whatsapp" class="text-xl" title="Share on WhatsApp"><i
+                                    class="fa-brands fa-whatsapp text-green-400"></i></button>
+                            <button id="share-facebook" class="text-xl" title="Share on Facebook"><i
+                                    class="fa-brands fa-facebook text-blue-400"></i></button>
+                            <button id="share-twitter" class="text-xl" title="Share on Twitter"><i
+                                    class="fa-brands fa-x-twitter text-white"></i></button>
                         </div>
                     </div>
-                    <p class="text-xs text-zinc-500">Need a different size? Message the seller for availability.</p>
+                    <p class="text-xs text-zinc-500">Select your size, color and quantity before adding this piece.</p>
                 </div>
             </div>
         </div>
@@ -843,8 +680,8 @@
                         class="w-8 h-8 rounded-full bg-[#adff2f] text-black flex items-center justify-center font-black text-xs">
                         O</div>
                     <div>
-                        <p class="text-sm font-bold">Omega</p>
-                        <p class="text-xs text-zinc-500">Search products fast</p>
+                        <p class="text-sm font-bold">VEYRO Assistant</p>
+                        <p class="text-xs text-zinc-500">Find your next piece</p>
                     </div>
                 </div>
                 <button id="chatbot-close" class="text-zinc-500 hover:text-white">&times;</button>
@@ -855,7 +692,7 @@
             <div id="chatbot-messages" class="px-4 pb-4 space-y-3 text-sm flex-1 overflow-y-auto"></div>
             <div class="p-3 border-t border-zinc-800">
                 <div class="flex items-center space-x-2">
-                    <input id="chatbot-input" type="text" placeholder="Try 'sneakers' or 'jacket'"
+                    <input id="chatbot-input" type="text" placeholder="Try 'hoodie' or 'under 999'"
                         class="flex-1 p-2 rounded-lg text-sm">
                     <button id="chatbot-mic"
                         class="border border-zinc-800 text-white px-3 py-2 rounded-lg text-xs font-bold hover:border-[#adff2f] hover:text-[#adff2f] transition flex items-center gap-2"
@@ -873,446 +710,136 @@
 
     <!-- MAIN SCRIPT -->
     <script>
-        const SUPABASE_URL = 'https://uwbylhsostgtkybnufvv.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_WZ59l4tzrWyhPur61_JLpA_hH6voRCR';
+        const SUPABASE_URL = 'https://rahkyerdsnenfbknuaml.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhaGt5ZXJkc25lbmZia251YW1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0OTU3MjcsImV4cCI6MjEwNDA3MTcyN30.K3sUpGIdFuxGKNOcZQWzoLs_A2Sca6ifu7GaX9dGmy4';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let isLoggedIn = false;
         let currentUser = null;
-        let currentProfilePhone = '';
-        let listingsCount = 0;
         const cartItems = [];
         const likedItems = [];
-        let pendingSignupName = '';
-        const tryOnState = {
-            stream: null,
-            offsetX: 0,
-            offsetY: 0,
-            scale: 1,
-            rotate: 0,
-            baseWidth: 0,
-            baseHeight: 0,
-            dragActive: false,
-            dragStartX: 0,
-            dragStartY: 0,
-            overlayStartX: 0,
-            overlayStartY: 0,
-            overlayUrl: null,
-            returnPage: 'home-page',
-            overlayRatio: 1,
-            autoFit: true,
-            trackingActive: false,
-            trackingBusy: false,
-            pose: null,
-            hands: null,
-            lastPose: null,
-            lastHand: null,
-            currentItemId: null,
-            currentCategory: 'torso'
-        };
+
+        // --- Product Reviews & Ratings ---
+        async function loadProductReviews(productId) {
+            if (!productId) return { reviews: [], avg: 0, count: 0 };
+            const { data, error } = await supabaseClient
+                .from('reviews')
+                .select('id, user_id, rating, text, created_at, profiles(full_name)')
+                .eq('product_id', productId)
+                .order('created_at', { ascending: false });
+            if (error) return { reviews: [], avg: 0, count: 0 };
+            const reviews = data || [];
+            const count = reviews.length;
+            const avg = count ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / count) : 0;
+            return { reviews, avg, count };
+        }
+
+        function renderStars(rating, max = 5) {
+            let html = '';
+            for (let i = 1; i <= max; i++) {
+                html += `<i class="fa${i <= rating ? 's' : 'r'} fa-star"></i>`;
+            }
+            return html;
+        }
+
+        function renderProductReviewsUI({ reviews, avg, count }) {
+            const stars = document.getElementById('product-modal-rating-stars');
+            const value = document.getElementById('product-modal-rating-value');
+            const countEl = document.getElementById('product-modal-rating-count');
+            const list = document.getElementById('product-modal-reviews-list');
+            if (stars) stars.innerHTML = renderStars(Math.round(avg));
+            if (value) value.textContent = avg ? avg.toFixed(1) : '';
+            if (countEl) countEl.textContent = count ? `(${count} review${count === 1 ? '' : 's'})` : '(No reviews yet)';
+            if (list) {
+                list.innerHTML = '';
+                reviews.forEach(r => {
+                    const name = r.profiles?.full_name || 'User';
+                    const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : '';
+                    const starsHtml = renderStars(r.rating);
+                    const text = r.text ? `<div class="text-zinc-300 text-xs mt-1">${r.text}</div>` : '';
+                    const el = document.createElement('div');
+                    el.className = 'bg-zinc-900 rounded-xl p-3';
+                    el.innerHTML = `<div class="flex items-center gap-2 mb-1">${starsHtml}<span class="text-xs text-zinc-400">${name}</span><span class="text-xs text-zinc-500 ml-auto">${date}</span></div>${text}`;
+                    list.appendChild(el);
+                });
+            }
+        }
+
+        function setupReviewForm(productId) {
+            const form = document.getElementById('product-modal-review-form');
+            const starsEl = document.getElementById('product-modal-review-stars');
+            const msg = document.getElementById('product-modal-review-message');
+            if (!form || !starsEl) return;
+            let selected = 0;
+            starsEl.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('i');
+                star.className = 'fa-regular fa-star text-yellow-400 text-lg cursor-pointer';
+                star.dataset.value = i;
+                star.addEventListener('mouseenter', () => {
+                    for (let j = 1; j <= 5; j++) {
+                        starsEl.children[j - 1].className = j <= i ? 'fa-solid fa-star text-yellow-400 text-lg cursor-pointer' : 'fa-regular fa-star text-yellow-400 text-lg cursor-pointer';
+                    }
+                });
+                star.addEventListener('mouseleave', () => {
+                    for (let j = 1; j <= 5; j++) {
+                        starsEl.children[j - 1].className = j <= selected ? 'fa-solid fa-star text-yellow-400 text-lg cursor-pointer' : 'fa-regular fa-star text-yellow-400 text-lg cursor-pointer';
+                    }
+                });
+                star.addEventListener('click', () => {
+                    selected = i;
+                    for (let j = 1; j <= 5; j++) {
+                        starsEl.children[j - 1].className = j <= selected ? 'fa-solid fa-star text-yellow-400 text-lg cursor-pointer' : 'fa-regular fa-star text-yellow-400 text-lg cursor-pointer';
+                    }
+                });
+                starsEl.appendChild(star);
+            }
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                if (!isLoggedIn) {
+                    msg.textContent = 'Please log in to submit a review.';
+                    msg.className = 'text-red-500 text-xs mt-1';
+                    return;
+                }
+                if (!selected) {
+                    msg.textContent = 'Please select a rating.';
+                    msg.className = 'text-red-500 text-xs mt-1';
+                    return;
+                }
+                const text = document.getElementById('product-modal-review-text').value.trim();
+                form.querySelector('button[type="submit"]').disabled = true;
+                msg.textContent = 'Submitting...';
+                msg.className = 'text-zinc-400 text-xs mt-1';
+                const { error } = await supabaseClient
+                    .from('reviews')
+                    .insert({
+                        product_id: productId,
+                        user_id: currentUser?.id,
+                        rating: selected,
+                        text: text
+                    });
+                if (error) {
+                    msg.textContent = 'Failed to submit review.';
+                    msg.className = 'text-red-500 text-xs mt-1';
+                } else {
+                    msg.textContent = 'Review submitted!';
+                    msg.className = 'text-green-500 text-xs mt-1';
+                    form.reset();
+                    selected = 0;
+                    for (let j = 1; j <= 5; j++) {
+                        starsEl.children[j - 1].className = 'fa-regular fa-star text-yellow-400 text-lg cursor-pointer';
+                    }
+                    // Reload reviews
+                    const { reviews, avg, count } = await loadProductReviews(productId);
+                    renderProductReviewsUI({ reviews, avg, count });
+                }
+                form.querySelector('button[type="submit"]').disabled = false;
+            };
+        }
 
         function getActivePageId() {
             const active = document.querySelector('.page-section.active-page');
             return active ? active.id : 'home-page';
-        }
-
-        function setTryOnStatus(message, isError) {
-            const status = document.getElementById('tryon-status');
-            if (!status) return;
-            status.textContent = message;
-            status.classList.toggle('text-red-400', !!isError);
-        }
-
-        function updateOverlayTransform() {
-            const overlay = document.getElementById('tryon-overlay');
-            if (!overlay) return;
-            overlay.style.transform = `translate(-50%, -50%) translate(${tryOnState.offsetX}px, ${tryOnState.offsetY}px) scale(${tryOnState.scale}) rotate(${tryOnState.rotate}deg)`;
-        }
-
-        function syncTryOnSliders() {
-            const scale = document.getElementById('tryon-scale');
-            const rotate = document.getElementById('tryon-rotate');
-            const offsetX = document.getElementById('tryon-offset-x');
-            const offsetY = document.getElementById('tryon-offset-y');
-            if (scale) scale.value = String(tryOnState.scale);
-            if (rotate) rotate.value = String(tryOnState.rotate);
-            if (offsetX) offsetX.value = String(Math.round(tryOnState.offsetX));
-            if (offsetY) offsetY.value = String(Math.round(tryOnState.offsetY));
-        }
-
-        function initTryOnOverlaySize() {
-            const overlay = document.getElementById('tryon-overlay');
-            const preview = document.getElementById('tryon-preview');
-            if (!overlay || !preview || !overlay.naturalWidth) return;
-
-            const maxWidth = Math.min(preview.clientWidth * 0.7, 420);
-            const ratio = overlay.naturalHeight / overlay.naturalWidth;
-            tryOnState.overlayRatio = ratio || 1;
-            tryOnState.baseWidth = maxWidth;
-            tryOnState.baseHeight = maxWidth * tryOnState.overlayRatio;
-            overlay.style.width = `${tryOnState.baseWidth}px`;
-            overlay.style.height = 'auto';
-            updateOverlayTransform();
-        }
-
-        function setAutoFitEnabled(enabled) {
-            tryOnState.autoFit = !!enabled;
-            const checkbox = document.getElementById('tryon-auto');
-            if (checkbox) checkbox.checked = tryOnState.autoFit;
-            if (tryOnState.autoFit) {
-                startTryOnTracking();
-            } else {
-                stopTryOnTracking();
-            }
-        }
-
-        function disableAutoFitOnManual() {
-            if (!tryOnState.autoFit) return;
-            setAutoFitEnabled(false);
-            setTryOnStatus('Auto-fit paused. Drag or use sliders.', false);
-        }
-
-        function detectItemCategory(item) {
-            const text = `${item?.tags || ''} ${item?.name || ''}`.toLowerCase();
-            if (/(watch|bracelet|band)/.test(text)) return 'wrist';
-            if (/(sneaker|shoe|boot)/.test(text)) return 'foot';
-            if (/(pants|jean|trouser|cargo|short)/.test(text)) return 'legs';
-            if (/(jacket|hoodie|shirt|tee|t-shirt|top|coat|dress)/.test(text)) return 'torso';
-            return 'torso';
-        }
-
-        function setTryOnItemData(item) {
-            const tryonName = document.getElementById('tryon-modal-name');
-            const select = document.getElementById('tryon-item-select');
-            if (tryonName) tryonName.textContent = item?.name || 'Try-On Studio';
-            tryOnState.currentItemId = item?.id || null;
-            tryOnState.currentCategory = detectItemCategory(item || {});
-            const overlaySrc = item?.tryon || item?.image || '';
-            if (overlaySrc) applyTryOnOverlay(overlaySrc);
-            if (select && tryOnState.currentItemId) select.value = tryOnState.currentItemId;
-            resetTryOnControls();
-            if (tryOnState.autoFit) {
-                setTimeout(() => applyAutoFitFromLandmarks(), 80);
-            }
-        }
-
-        function renderTryOnItemOptions() {
-            const select = document.getElementById('tryon-item-select');
-            if (!select) return;
-            select.innerHTML = '';
-            if (cartItems.length === 0) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'Cart is empty';
-                select.appendChild(option);
-                return;
-            }
-
-            cartItems.forEach((item) => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = `${item.name} (${item.size || '—'})`;
-                select.appendChild(option);
-            });
-
-            if (tryOnState.currentItemId) {
-                select.value = tryOnState.currentItemId;
-            } else if (cartItems[0]) {
-                select.value = cartItems[0].id;
-            }
-        }
-
-        function applyTryOnItemById(id) {
-            const item = cartItems.find(entry => entry.id === id);
-            if (!item) return;
-            setTryOnItemData(item);
-        }
-
-        function initTryOnTrackers() {
-            if (!window.Pose || !window.Hands) {
-                setTryOnStatus('Auto-fit unavailable (MediaPipe failed to load).', true);
-                return;
-            }
-
-            if (!tryOnState.pose) {
-                tryOnState.pose = new Pose({
-                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/${file}`
-                });
-                tryOnState.pose.setOptions({
-                    modelComplexity: 1,
-                    smoothLandmarks: true,
-                    enableSegmentation: false,
-                    minDetectionConfidence: 0.6,
-                    minTrackingConfidence: 0.6
-                });
-                tryOnState.pose.onResults((results) => {
-                    tryOnState.lastPose = results.poseLandmarks || null;
-                });
-            }
-
-            if (!tryOnState.hands) {
-                tryOnState.hands = new Hands({
-                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
-                });
-                tryOnState.hands.setOptions({
-                    maxNumHands: 1,
-                    modelComplexity: 0,
-                    minDetectionConfidence: 0.6,
-                    minTrackingConfidence: 0.6
-                });
-                tryOnState.hands.onResults((results) => {
-                    tryOnState.lastHand = results.multiHandLandmarks?.[0] || null;
-                });
-            }
-        }
-
-        async function trackTryOnFrame() {
-            if (!tryOnState.trackingActive) return;
-            const video = document.getElementById('tryon-video');
-            if (!video || !video.videoWidth) {
-                requestAnimationFrame(trackTryOnFrame);
-                return;
-            }
-
-            if (!tryOnState.trackingBusy) {
-                tryOnState.trackingBusy = true;
-                try {
-                    if (tryOnState.pose) await tryOnState.pose.send({ image: video });
-                    if (tryOnState.hands) await tryOnState.hands.send({ image: video });
-                } finally {
-                    tryOnState.trackingBusy = false;
-                }
-            }
-
-            if (tryOnState.autoFit) {
-                applyAutoFitFromLandmarks();
-            }
-            requestAnimationFrame(trackTryOnFrame);
-        }
-
-        function startTryOnTracking() {
-            initTryOnTrackers();
-            if (!tryOnState.pose && !tryOnState.hands) return;
-            if (tryOnState.trackingActive) return;
-            tryOnState.trackingActive = true;
-            trackTryOnFrame();
-        }
-
-        function stopTryOnTracking() {
-            tryOnState.trackingActive = false;
-        }
-
-        function applyAutoFitFromLandmarks() {
-            const preview = document.getElementById('tryon-preview');
-            if (!preview || !tryOnState.overlayRatio) return;
-
-            const toPx = (landmark) => ({
-                x: landmark.x * preview.clientWidth,
-                y: landmark.y * preview.clientHeight
-            });
-
-            let center = null;
-            let targetWidth = null;
-
-            if (tryOnState.currentCategory === 'wrist' && tryOnState.lastHand) {
-                const wrist = toPx(tryOnState.lastHand[0]);
-                const index = toPx(tryOnState.lastHand[5]);
-                const dist = Math.hypot(wrist.x - index.x, wrist.y - index.y);
-                center = wrist;
-                targetWidth = dist * 3.2;
-            } else if (tryOnState.lastPose) {
-                const pose = tryOnState.lastPose;
-                const leftShoulder = pose[11];
-                const rightShoulder = pose[12];
-                const leftHip = pose[23];
-                const rightHip = pose[24];
-                const leftAnkle = pose[27];
-                const rightAnkle = pose[28];
-
-                if (tryOnState.currentCategory === 'foot' && leftAnkle && rightAnkle) {
-                    const a = toPx(leftAnkle);
-                    const b = toPx(rightAnkle);
-                    center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-                    targetWidth = Math.hypot(a.x - b.x, a.y - b.y) * 1.6;
-                } else if (tryOnState.currentCategory === 'legs' && leftHip && rightHip && leftAnkle && rightAnkle) {
-                    const hip = toPx({
-                        x: (leftHip.x + rightHip.x) / 2,
-                        y: (leftHip.y + rightHip.y) / 2
-                    });
-                    const ankle = toPx({
-                        x: (leftAnkle.x + rightAnkle.x) / 2,
-                        y: (leftAnkle.y + rightAnkle.y) / 2
-                    });
-                    center = { x: hip.x, y: (hip.y + ankle.y) / 2 };
-                    targetWidth = Math.hypot(leftHip.x - rightHip.x, leftHip.y - rightHip.y) * preview.clientWidth * 1.4;
-                } else if (leftShoulder && rightShoulder && leftHip && rightHip) {
-                    const shoulderMid = toPx({
-                        x: (leftShoulder.x + rightShoulder.x) / 2,
-                        y: (leftShoulder.y + rightShoulder.y) / 2
-                    });
-                    const hipMid = toPx({
-                        x: (leftHip.x + rightHip.x) / 2,
-                        y: (leftHip.y + rightHip.y) / 2
-                    });
-                    center = { x: shoulderMid.x, y: (shoulderMid.y + hipMid.y) / 2 };
-                    targetWidth = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y) * preview.clientWidth * 1.7;
-                }
-            }
-
-            if (!center || !targetWidth) return;
-
-            const previewCenterX = preview.clientWidth / 2;
-            const previewCenterY = preview.clientHeight / 2;
-            tryOnState.offsetX = center.x - previewCenterX;
-            tryOnState.offsetY = center.y - previewCenterY;
-            tryOnState.baseWidth = Math.max(120, Math.min(targetWidth, preview.clientWidth * 0.9));
-            tryOnState.baseHeight = tryOnState.baseWidth * tryOnState.overlayRatio;
-            tryOnState.scale = 1;
-            tryOnState.rotate = 0;
-
-            const overlay = document.getElementById('tryon-overlay');
-            if (overlay) overlay.style.width = `${tryOnState.baseWidth}px`;
-            updateOverlayTransform();
-            syncTryOnSliders();
-        }
-
-        async function startTryOnCamera() {
-            const video = document.getElementById('tryon-video');
-            if (!video) return;
-
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                setTryOnStatus('Camera not supported on this browser.', true);
-                return;
-            }
-
-            if (tryOnState.stream) {
-                setTryOnStatus('Camera already running.');
-                return;
-            }
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 960 } },
-                    audio: false
-                });
-                tryOnState.stream = stream;
-                video.srcObject = stream;
-                await video.play();
-                setTryOnStatus('Camera on');
-                if (tryOnState.autoFit) startTryOnTracking();
-            } catch (error) {
-                setTryOnStatus('Camera blocked. Allow permissions and try again.', true);
-            }
-        }
-
-        function stopTryOnCamera() {
-            const video = document.getElementById('tryon-video');
-            if (tryOnState.stream) {
-                tryOnState.stream.getTracks().forEach(track => track.stop());
-                tryOnState.stream = null;
-            }
-            if (video) video.srcObject = null;
-            stopTryOnTracking();
-            setTryOnStatus('Camera stopped');
-        }
-
-        function resetTryOnControls() {
-            tryOnState.offsetX = 0;
-            tryOnState.offsetY = 0;
-            tryOnState.scale = 1;
-            tryOnState.rotate = 0;
-            syncTryOnSliders();
-            updateOverlayTransform();
-        }
-
-        function applyTryOnOverlay(src) {
-            const overlay = document.getElementById('tryon-overlay');
-            if (!overlay) return;
-            overlay.crossOrigin = 'anonymous';
-            overlay.onload = () => {
-                initTryOnOverlaySize();
-                if (tryOnState.autoFit) applyAutoFitFromLandmarks();
-            };
-            overlay.src = src;
-        }
-
-        function setupTryOnDrag() {
-            const overlay = document.getElementById('tryon-overlay');
-            if (!overlay) return;
-
-            overlay.addEventListener('pointerdown', (event) => {
-                event.preventDefault();
-                disableAutoFitOnManual();
-                overlay.setPointerCapture(event.pointerId);
-                tryOnState.dragActive = true;
-                tryOnState.dragStartX = event.clientX;
-                tryOnState.dragStartY = event.clientY;
-                tryOnState.overlayStartX = tryOnState.offsetX;
-                tryOnState.overlayStartY = tryOnState.offsetY;
-            });
-
-            overlay.addEventListener('pointermove', (event) => {
-                if (!tryOnState.dragActive) return;
-                const dx = event.clientX - tryOnState.dragStartX;
-                const dy = event.clientY - tryOnState.dragStartY;
-                tryOnState.offsetX = tryOnState.overlayStartX + dx;
-                tryOnState.offsetY = tryOnState.overlayStartY + dy;
-                updateOverlayTransform();
-                syncTryOnSliders();
-            });
-
-            overlay.addEventListener('pointerup', () => {
-                tryOnState.dragActive = false;
-            });
-
-            overlay.addEventListener('pointercancel', () => {
-                tryOnState.dragActive = false;
-            });
-        }
-
-        function captureTryOnSnapshot() {
-            const video = document.getElementById('tryon-video');
-            const overlay = document.getElementById('tryon-overlay');
-            const canvas = document.getElementById('tryon-canvas');
-            const preview = document.getElementById('tryon-preview');
-            if (!video || !overlay || !canvas || !preview) return;
-
-            if (!video.videoWidth) {
-                alert('Camera is not ready yet.');
-                return;
-            }
-
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            if (overlay.complete && overlay.naturalWidth) {
-                const scaleX = canvas.width / preview.clientWidth;
-                const scaleY = canvas.height / preview.clientHeight;
-                const centerX = (preview.clientWidth / 2 + tryOnState.offsetX) * scaleX;
-                const centerY = (preview.clientHeight / 2 + tryOnState.offsetY) * scaleY;
-                const drawW = tryOnState.baseWidth * tryOnState.scale * scaleX;
-                const drawH = tryOnState.baseHeight * tryOnState.scale * scaleY;
-
-                ctx.save();
-                ctx.translate(centerX, centerY);
-                ctx.rotate((tryOnState.rotate * Math.PI) / 180);
-                ctx.drawImage(overlay, -drawW / 2, -drawH / 2, drawW, drawH);
-                ctx.restore();
-            }
-
-            try {
-                const dataUrl = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = dataUrl;
-                link.download = 'campusswap-tryon.png';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (error) {
-                alert('Snapshot failed. Use a local upload or CORS-enabled image.');
-            }
         }
 
         // Navigation Function
@@ -1341,10 +868,6 @@
                 nav.classList.remove('hidden');
             }
 
-            if (pageId !== 'tryon-page') {
-                stopTryOnCamera();
-            }
-
             // Scroll to top
             window.scrollTo(0, 0);
         }
@@ -1353,15 +876,17 @@
         async function loginUser() {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
-            const otp = document.getElementById('login-otp').value.trim();
+            // OTP input removed from UI, so skip reading it
+            const otp = '';
+
 
             if (!email) {
-                alert('Please enter your email.');
+                showNotification('Please enter your email.', 'error');
                 return;
             }
 
             if (!isValidEmail(email)) {
-                alert('Please enter a valid email address.');
+                showNotification('Please enter a valid email address.', 'error');
                 return;
             }
 
@@ -1377,32 +902,16 @@
                     isLoggedIn = !!data?.session;
                     updateAuthUI();
                     showPage('home-page');
-                    alert('Login successful.');
+                    showNotification('Login successful.', 'success');
                     document.getElementById('login-password').value = '';
                     return;
                 }
 
-                if (!otp) {
-                    const { error } = await supabaseClient.auth.signInWithOtp({ email });
-                    if (error) throw error;
-                    alert('Login link sent. Check your email to verify.');
-                    return;
-                }
-
-                const { data, error } = await supabaseClient.auth.verifyOtp({ email, token: otp, type: 'email' });
-                if (error) throw error;
-
-                currentUser = data?.user || null;
-                await upsertUserProfile({ user: currentUser, name: currentUser?.user_metadata?.name, email });
-                await loadProfile(currentUser);
-
-                isLoggedIn = !!data?.session;
-                updateAuthUI();
-                showPage('home-page');
-                alert('Login successful.');
-                document.getElementById('login-otp').value = '';
+                // OTP login is not available since the input is removed
+                showNotification('Please enter your password to log in.', 'error');
+                return;
             } catch (error) {
-                alert(error?.message || 'Login failed. Please try again.');
+                showNotification(error?.message || 'Login failed. Please try again.', 'error');
             }
         }
 
@@ -1410,95 +919,35 @@
         async function signupUser() {
             const name = document.querySelector('#signup-page input[type="text"]').value.trim();
             const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value.trim();
-            const otp = document.getElementById('signup-otp').value.trim();
             const terms = document.querySelector('#signup-page input[type="checkbox"]').checked;
 
+
             if (!name || !email) {
-                alert('Please fill in all required fields.');
+                showNotification('Please fill in all required fields.', 'error');
                 return;
             }
 
             if (!isValidEmail(email)) {
-                alert('Please enter a valid email address.');
+                showNotification('Please enter a valid email address.', 'error');
                 return;
             }
 
             if (!terms) {
-                alert('Please agree to the terms and conditions');
+                showNotification('Please agree to the terms and conditions', 'error');
                 return;
             }
 
+
             try {
-                if (password) {
-                    if (password.length < 6) {
-                        alert('Password should be at least 6 characters.');
-                        return;
-                    }
-
-                    const { data, error } = await supabaseClient.auth.signUp({
-                        email,
-                        password,
-                        options: { data: { name } }
-                    });
-                    if (error) throw error;
-
-                    currentUser = data?.user || null;
-                    if (currentUser) {
-                        await upsertUserProfile({ user: currentUser, name, email });
-                        await loadProfile(currentUser);
-                    }
-
-                    isLoggedIn = !!data?.session;
-                    updateAuthUI();
-                    if (isLoggedIn) {
-                        showPage('home-page');
-                    }
-                    alert('Account created. Check your email to confirm if required.');
-                    document.getElementById('signup-password').value = '';
-                    return;
-                }
-
-                if (!otp) {
-                    pendingSignupName = name;
-                    const { error } = await supabaseClient.auth.signInWithOtp({ email });
-                    if (error) throw error;
-                    alert('Signup link sent. Check your email to verify.');
-                    return;
-                }
-
-                const { data, error } = await supabaseClient.auth.verifyOtp({ email, token: otp, type: 'email' });
+                const { error } = await supabaseClient.auth.signInWithOtp({
+                    email,
+                    options: { data: { name } }
+                });
                 if (error) throw error;
-
-                const profileName = name || pendingSignupName;
-                if (profileName) {
-                    await supabaseClient.auth.updateUser({ data: { name: profileName } });
-                }
-
-                currentUser = data?.user || null;
-                await upsertUserProfile({ user: currentUser, name: profileName, email });
-                await loadProfile(currentUser);
-
-                isLoggedIn = !!data?.session;
-                updateAuthUI();
-                showPage('home-page');
-                alert('Account created successfully!');
-                document.getElementById('signup-otp').value = '';
+                showNotification('Signup link sent. Check your email to verify. If you do not see the email, check your spam or junk folder.', 'info');
             } catch (error) {
-                alert(error?.message || 'Signup failed. Please try again.');
+                showNotification(error?.message || 'Signup failed. Please try again.', 'error');
             }
-        }
-
-        function showTerms() {
-            alert('Terms of Service: This is a demo site. By using CampusSwap, you agree to our terms...');
-        }
-
-        function showPrivacy() {
-            alert('Privacy Policy: We value your privacy. Your data is secure with us...');
-        }
-
-        function isValidPhone(phone) {
-            return /^\+91\d{10}$/.test(phone.trim());
         }
 
         function isValidEmail(email) {
@@ -1506,37 +955,122 @@
         }
 
         // Profile Page Functions
-        function startSelling() {
-            if (!isLoggedIn) {
-                alert('Please log in or sign up to sell an item.');
-                showPage('login-page');
-                return;
-            }
-            showPage('sell-page');
-        }
-
         async function editProfile() {
             if (!currentUser) {
-                alert('Please log in to edit your profile.');
+                showNotification('Please log in to edit your profile.', 'error');
                 return;
             }
-
-            const newName = prompt('Enter new name:', 'John Doe');
-            if (!newName) return;
-
-            try {
-                await supabaseClient.auth.updateUser({ data: { name: newName } });
-                await upsertUserProfile({ user: currentUser, name: newName, email: currentUser.email });
-                setProfileUI({ name: newName, email: currentUser.email });
-                alert('Profile updated!');
-            } catch (error) {
-                alert(error?.message || 'Profile update failed.');
-            }
+            // Show modal
+            const modal = document.getElementById('edit-profile-modal');
+            const nameInput = document.getElementById('edit-profile-name');
+            const locationInput = document.getElementById('edit-profile-location');
+            // Pre-fill with current values
+            nameInput.value = document.getElementById('profile-name').textContent || '';
+            const meta = document.getElementById('profile-meta').textContent || '';
+            locationInput.value = meta.startsWith('Location:') ? meta.replace('Location:', '').trim() : '';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
 
+        // Modal event listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            // Social sharing handlers for product modal
+            function getProductShareData() {
+                const modal = document.getElementById('product-modal');
+                if (!modal) return { url: window.location.href, text: 'Check out this piece from VEYRO!' };
+                const name = modal.dataset.product || 'Product';
+                const price = modal.dataset.price || '';
+                const url = window.location.href.split('#')[0];
+                return {
+                    url,
+                    text: `Check out ${name}${price ? ' for ₹' + price : ''} from VEYRO. ${url}`
+                };
+            }
+            const shareWhatsapp = document.getElementById('share-whatsapp');
+            if (shareWhatsapp) shareWhatsapp.addEventListener('click', function () {
+                const { text } = getProductShareData();
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            });
+            const shareFacebook = document.getElementById('share-facebook');
+            if (shareFacebook) shareFacebook.addEventListener('click', function () {
+                const { url, text } = getProductShareData();
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank');
+            });
+            const shareTwitter = document.getElementById('share-twitter');
+            if (shareTwitter) shareTwitter.addEventListener('click', function () {
+                const { url, text } = getProductShareData();
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+            });
+            async function renderOrderHistory() {
+                const list = document.getElementById('order-history-list');
+                const empty = document.getElementById('order-history-empty');
+                if (!list || !empty) return;
+                list.innerHTML = '';
+                if (!currentUser) {
+                    empty.textContent = 'Log in to view your VEYRO orders.';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                const { data: orders, error } = await supabaseClient
+                    .from('orders')
+                    .select('id, order_number, created_at, total_amount, payment_status, fulfillment_status, tracking_number, tracking_url, order_items(product_name, size, color, quantity)')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                if (error) {
+                    empty.textContent = 'Order history is temporarily unavailable.';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                if (!orders.length) {
+                    empty.textContent = 'No VEYRO orders yet.';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                empty.classList.add('hidden');
+                orders.forEach(order => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-zinc-900 rounded-xl p-4';
+                    const items = (order.order_items || []).map(item => `${item.product_name} (${item.size || '—'}${item.color ? ` / ${item.color}` : ''}) x${item.quantity}`).join(', ');
+                    card.textContent = `#${order.order_number} · ${new Date(order.created_at).toLocaleDateString()} · ${formatMoney(order.total_amount)} · Payment: ${order.payment_status} · Fulfillment: ${order.fulfillment_status}${items ? ` · ${items}` : ''}`;
+                    if (order.tracking_url) {
+                        const link = document.createElement('a');
+                        link.href = order.tracking_url;
+                        link.target = '_blank';
+                        link.rel = 'noopener';
+                        link.className = 'block text-[#adff2f] text-xs mt-2';
+                        link.textContent = order.tracking_number ? `Track ${order.tracking_number}` : 'Track shipment';
+                        card.appendChild(link);
+                    }
+                    list.appendChild(card);
+                });
+            }
+            renderOrderHistory();
+            document.addEventListener('veyro-auth-ready', renderOrderHistory);
+            const modal = document.getElementById('edit-profile-modal');
+            const closeBtn = document.getElementById('edit-profile-close');
+            const saveBtn = document.getElementById('edit-profile-save');
+            if (closeBtn) closeBtn.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+            if (saveBtn) saveBtn.onclick = async function () {
+                const name = document.getElementById('edit-profile-name').value.trim();
+                const location = document.getElementById('edit-profile-location').value.trim();
+                if (!name) { showNotification('Name cannot be empty.', 'error'); return; }
+                try {
+                    await supabaseClient.auth.updateUser({ data: { name } });
+                    await upsertUserProfile({ user: currentUser, name, location });
+                    setProfileUI({ name, email: currentUser.email, location });
+                    showNotification('Profile updated!', 'success');
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                } catch (error) {
+                    showNotification(error?.message || 'Profile update failed.', 'error');
+                }
+            };
+        });
+
         async function setAccountPassword() {
+
             if (!currentUser) {
-                alert('Please log in to set a password.');
+                showNotification('Please log in to set a password.', 'error');
                 return;
             }
 
@@ -1544,17 +1078,17 @@
             const confirm = document.getElementById('profile-password-confirm').value.trim();
 
             if (!password || !confirm) {
-                alert('Please fill in both password fields.');
+                showNotification('Please fill in both password fields.', 'error');
                 return;
             }
 
             if (password.length < 6) {
-                alert('Password should be at least 6 characters.');
+                showNotification('Password should be at least 6 characters.', 'error');
                 return;
             }
 
             if (password !== confirm) {
-                alert('Passwords do not match.');
+                showNotification('Passwords do not match.', 'error');
                 return;
             }
 
@@ -1563,41 +1097,18 @@
                 if (error) throw error;
                 document.getElementById('profile-password').value = '';
                 document.getElementById('profile-password-confirm').value = '';
-                alert('Password saved successfully.');
+                showNotification('Password saved successfully.', 'success');
             } catch (error) {
-                alert(error?.message || 'Password update failed.');
-            }
-        }
-
-        async function setProfilePhone() {
-            if (!currentUser) {
-                alert('Please log in to update your phone.');
-                return;
-            }
-
-            const input = document.getElementById('profile-phone-input');
-            const phone = input ? input.value.trim() : '';
-
-            if (!phone) {
-                alert('Please enter a phone number.');
-                return;
-            }
-
-            try {
-                await upsertUserProfile({ user: currentUser, phone });
-                setProfileUI({ name: currentUser.user_metadata?.name, email: currentUser.email, phone });
-                alert('Phone updated successfully.');
-            } catch (error) {
-                alert(error?.message || 'Phone update failed.');
+                showNotification(error?.message || 'Password update failed.', 'error');
             }
         }
 
         function paymentMethods() {
-            alert('Payment methods page would open here');
+            showNotification('Payment methods page would open here', 'info');
         }
 
         function notificationSettings() {
-            alert('Notification settings page would open here');
+            showNotification('Notification settings page would open here', 'info');
         }
 
         // Contact Page Functions
@@ -1608,29 +1119,30 @@
             const message = document.getElementById('contact-message').value;
 
             if (!name || !email || !subject || !message) {
-                alert('Please fill in all fields');
+                showNotification('Please fill in all fields', 'error');
                 return;
             }
 
-            const mailtoLink = `mailto:lingamallujaya169@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)}`;
-            window.location.href = mailtoLink;
-
-            // Clear form
-            document.getElementById('contact-name').value = '';
-            document.getElementById('contact-email').value = '';
-            document.getElementById('contact-subject').value = '';
-            document.getElementById('contact-message').value = '';
+            // Use EmailJS to send the contact form
+            showNotification('Sending message...', 'info');
+            window.sendContactFormEmail(name, email, subject, message)
+                .then(function (response) {
+                    showNotification('Message sent successfully!', 'success');
+                    document.getElementById('contact-name').value = '';
+                    document.getElementById('contact-email').value = '';
+                    document.getElementById('contact-subject').value = '';
+                    document.getElementById('contact-message').value = '';
+                }, function (error) {
+                    showNotification('Failed to send message. Please try again later.', 'error');
+                });
         }
 
         // Liked Page Functions
-        function moveToBag(itemName) {
-            alert(`Added "${itemName}" to your bag!`);
-        }
 
         async function addToWishlist(item) {
             if (!item || !item.name) return false;
             if (!isLoggedIn) {
-                alert('Please log in to save items to your wishlist.');
+                showNotification('Please log in to save items to your wishlist.', 'error');
                 showPage('login-page');
                 return false;
             }
@@ -1658,7 +1170,6 @@
                     seller_phone: item.sellerPhone || '',
                     description: item.description || '',
                     image_url: item.image || '',
-                    tryon_url: item.tryon || item.image || ''
                 });
             }
 
@@ -1735,6 +1246,9 @@
             const modalColor = document.getElementById('product-modal-color');
             const modalMaterial = document.getElementById('product-modal-material');
             const modalLocation = document.getElementById('product-modal-location');
+            const sizeSelect = document.getElementById('product-modal-size-select');
+            const colorSelect = document.getElementById('product-modal-color-select');
+            const quantityInput = document.getElementById('product-modal-quantity');
             const callLink = document.getElementById('product-modal-call');
             const whatsappLink = document.getElementById('product-modal-whatsapp');
 
@@ -1750,6 +1264,17 @@
             if (modalColor) modalColor.textContent = color;
             if (modalMaterial) modalMaterial.textContent = material;
             if (modalLocation) modalLocation.textContent = location;
+            if (sizeSelect) {
+                const sizes = (card.dataset.sizes || size).split(',').map(value => value.trim()).filter(Boolean);
+                sizeSelect.innerHTML = sizes.map(value => `<option value="${value}">${value}</option>`).join('');
+                sizeSelect.value = size;
+            }
+            if (colorSelect) {
+                const colors = (card.dataset.colors || color).split(',').map(value => value.trim()).filter(Boolean);
+                colorSelect.innerHTML = colors.map(value => `<option value="${value}">${value}</option>`).join('');
+                colorSelect.value = color;
+            }
+            if (quantityInput) quantityInput.value = '1';
 
             const safePhone = sellerPhone.replace(/\D/g, '');
             if (callLink) callLink.href = safePhone ? `tel:${safePhone}` : 'tel:';
@@ -1762,8 +1287,10 @@
                 modal.dataset.product = name;
                 modal.dataset.price = price;
                 modal.dataset.size = size;
+                modal.dataset.sizes = card.dataset.sizes || size;
+                modal.dataset.variantId = card.dataset.variantId || '';
+                modal.dataset.printifyVariantId = card.dataset.printifyVariantId || '';
                 modal.dataset.image = image ? image.src : '';
-                modal.dataset.tryon = card.dataset.tryon || modal.dataset.image;
                 modal.dataset.tags = tags;
                 modal.dataset.category = category;
                 modal.dataset.description = description;
@@ -1791,28 +1318,29 @@
             modal.classList.remove('flex');
         }
 
-        function findCartItemIndex(productId, name, size) {
+        function findCartItemIndex(productId, name, size, color = '') {
             if (productId) {
-                return cartItems.findIndex(item => item.productId === productId);
+                return cartItems.findIndex(item => item.productId === productId && item.size === size && (item.color || '') === color);
             }
-            return cartItems.findIndex(item => item.name === name && item.size === size);
+            return cartItems.findIndex(item => item.name === name && item.size === size && (item.color || '') === color);
         }
 
         async function addToCart(itemName) {
             if (!itemName) return;
             if (!isLoggedIn) {
-                alert('Please log in to add items to your cart.');
+                showNotification('Please log in to add items to your cart.', 'error');
                 showPage('login-page');
                 return;
             }
             const modal = document.getElementById('product-modal');
             const payload = buildProductPayloadFromModal(modal);
             const sizeValue = payload.size || '—';
+            const quantity = Math.max(1, Math.min(20, Number(payload.quantity) || 1));
 
-            const existingIndex = findCartItemIndex(payload.productId, itemName, sizeValue);
+            const existingIndex = findCartItemIndex(payload.productId, itemName, sizeValue, payload.color);
             if (existingIndex >= 0) {
                 const existing = cartItems[existingIndex];
-                existing.quantity += 1;
+                existing.quantity += quantity;
                 renderCart();
 
                 if (currentUser && existing.id && payload.productId) {
@@ -1839,21 +1367,24 @@
                 size: sizeValue,
                 image: payload.image_url || '',
                 category: payload.category || '',
-                quantity: 1,
+                quantity,
                 description: payload.description || 'Details coming soon.',
                 condition: payload.condition || '—',
                 color: payload.color || '—',
+                variantId: payload.variantId || null,
+                printifyVariantId: payload.printifyVariantId || null,
                 material: payload.material || '—',
                 location: payload.location || '—',
                 sellerPhone: payload.seller_phone || '',
                 tags: payload.tags || '',
-                tryon: payload.tryon_url || payload.image_url || ''
+                supplierType: payload.supplier_type || 'printify',
+                supplierProductId: payload.supplier_product_id || '',
             };
 
             if (currentUser && productId) {
                 const { data, error } = await supabaseClient
                     .from('cart_items')
-                    .upsert({ user_id: currentUser.id, product_id: productId, quantity: 1 }, { onConflict: 'user_id,product_id' })
+                    .insert({ user_id: currentUser.id, product_id: productId, variant_id: payload.variantId || null, printify_variant_id: payload.printifyVariantId || null, supplier_type: payload.supplier_type || 'printify', supplier_product_id: payload.supplier_product_id || null, quantity })
                     .select('id, quantity')
                     .single();
                 if (!error && data) {
@@ -1870,11 +1401,11 @@
         async function addToCartFromItem(item) {
             if (!item || !item.name) return;
             if (!isLoggedIn) {
-                alert('Please log in to add items to your cart.');
+                showNotification('Please log in to add items to your cart.', 'error');
                 showPage('login-page');
                 return;
             }
-            const existingIndex = findCartItemIndex(item.productId, item.name, item.size || '—');
+            const existingIndex = findCartItemIndex(item.productId, item.name, item.size || '—', item.color || '');
 
             if (existingIndex >= 0) {
                 const existing = cartItems[existingIndex];
@@ -1906,7 +1437,6 @@
                     seller_phone: item.sellerPhone || '',
                     description: item.description || '',
                     image_url: item.image || '',
-                    tryon_url: item.tryon || item.image || ''
                 });
             }
 
@@ -1922,17 +1452,20 @@
                 description: item.description || 'Details coming soon.',
                 condition: item.condition || '—',
                 color: item.color || '—',
+                variantId: item.variantId || null,
+                printifyVariantId: item.printifyVariantId || null,
                 material: item.material || '—',
                 location: item.location || '—',
                 sellerPhone: item.sellerPhone || '',
                 tags: item.tags || '',
-                tryon: item.tryon || item.image || ''
+                supplierType: item.supplierType || 'printify',
+                supplierProductId: item.supplierProductId || '',
             };
 
             if (currentUser && productId) {
                 const { data, error } = await supabaseClient
                     .from('cart_items')
-                    .upsert({ user_id: currentUser.id, product_id: productId, quantity: 1 }, { onConflict: 'user_id,product_id' })
+                    .insert({ user_id: currentUser.id, product_id: productId, variant_id: item.variantId || null, printify_variant_id: item.printifyVariantId || null, supplier_type: item.supplierType || 'printify', supplier_product_id: item.supplierProductId || null, quantity: 1 })
                     .select('id, quantity')
                     .single();
                 if (!error && data) {
@@ -1954,6 +1487,89 @@
             }).format(amount);
         }
 
+        function renderCheckoutSummary() {
+            const summary = document.getElementById('checkout-summary');
+            const total = document.getElementById('checkout-total');
+            if (!summary || !total) return;
+            summary.innerHTML = '';
+            let subtotal = 0;
+            cartItems.forEach(item => {
+                const quantity = Math.max(1, Number(item.quantity) || 1);
+                subtotal += (Number(item.price) || 0) * quantity;
+                const line = document.createElement('div');
+                line.className = 'flex justify-between gap-4';
+                const label = document.createElement('span');
+                label.className = 'text-zinc-400';
+                label.textContent = `${item.name} / ${item.size || '—'} / ${item.color || '—'} x${quantity}`;
+                const amount = document.createElement('span');
+                amount.textContent = formatMoney((Number(item.price) || 0) * quantity);
+                line.append(label, amount);
+                summary.appendChild(line);
+            });
+            total.textContent = formatMoney(subtotal);
+        }
+
+        function openCheckout() {
+            if (!isLoggedIn || !currentUser) {
+                showNotification('Please log in before checkout.', 'error');
+                showPage('login-page');
+                return;
+            }
+            if (!cartItems.length) {
+                showNotification('Your cart is empty.', 'error');
+                return;
+            }
+            const email = document.getElementById('checkout-email');
+            if (email && currentUser.email) email.value = currentUser.email;
+            renderCheckoutSummary();
+            showPage('checkout-page');
+        }
+
+        async function submitCheckout(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const message = document.getElementById('checkout-message');
+            const submit = document.getElementById('checkout-submit');
+            if (!currentUser || !cartItems.length || !form.reportValidity()) return;
+            const postalCode = document.getElementById('checkout-postal-code').value.trim();
+            if (!/^\d{4,10}$/.test(postalCode)) {
+                message.textContent = 'Enter a valid postal code.';
+                message.className = 'text-sm text-red-400';
+                return;
+            }
+            const customer = {
+                name: document.getElementById('checkout-name').value.trim(),
+                email: document.getElementById('checkout-email').value.trim(),
+                phone: document.getElementById('checkout-phone').value.trim(),
+                shipping_address: document.getElementById('checkout-address').value.trim(),
+                city: document.getElementById('checkout-city').value.trim(),
+                state: document.getElementById('checkout-state').value.trim(),
+                postal_code: postalCode,
+                country: document.getElementById('checkout-country').value.trim()
+            };
+            const items = cartItems.map(item => ({
+                product_id: item.productId,
+                variant_id: item.variantId || null,
+                printify_variant_id: item.printifyVariantId || null,
+                supplier_type: item.supplierType || 'printify',
+                supplier_product_id: item.supplierProductId || null,
+                quantity: Math.max(1, Number(item.quantity) || 1)
+            }));
+            submit.disabled = true;
+            message.textContent = 'Validating your order securely...';
+            message.className = 'text-sm text-zinc-400';
+            const { data, error } = await supabaseClient.functions.invoke('create-payment-order', {
+                body: { customer, items }
+            });
+            submit.disabled = false;
+            if (error || !data?.checkout_url) {
+                message.textContent = error?.message || 'Payment checkout is not configured yet.';
+                message.className = 'text-sm text-red-400';
+                return;
+            }
+            window.location.assign(data.checkout_url);
+        }
+
         function buildWhatsappLink(phone, productName, price, size, shopName) {
             const safePhone = (phone || '').replace(/\D/g, '');
             if (!safePhone) return '';
@@ -1968,11 +1584,16 @@
 
         function handleCallSellerClick(event) {
             event.preventDefault();
+            if (!isLoggedIn) {
+                showNotification('Please log in or sign up to contact the seller.', 'error');
+                showPage('login-page');
+                return;
+            }
             const modal = document.getElementById('product-modal');
             const phone = modal ? modal.dataset.sellerPhone : '';
             const safePhone = (phone || '').replace(/\D/g, '');
             if (!safePhone) {
-                alert('Seller phone number is not available.');
+                showNotification('Seller phone number is not available.', 'error');
                 return;
             }
             window.location.href = `tel:${safePhone}`;
@@ -1980,14 +1601,19 @@
 
         function handleWhatsappSellerClick(event) {
             event.preventDefault();
+            if (!isLoggedIn) {
+                showNotification('Please log in or sign up to contact the seller.', 'error');
+                showPage('login-page');
+                return;
+            }
             const modal = document.getElementById('product-modal');
             const phone = modal ? modal.dataset.sellerPhone : '';
             const name = modal ? modal.dataset.product : '';
             const price = modal ? modal.dataset.price : '';
             const size = modal ? modal.dataset.size : '';
-            const link = buildWhatsappLink(phone, name, price, size, 'CampusSwap');
+            const link = buildWhatsappLink(phone, name, price, size, 'VEYRO');
             if (!link) {
-                alert('Seller WhatsApp number is not available.');
+                showNotification('Seller WhatsApp number is not available.', 'error');
                 return;
             }
             window.open(link, '_blank', 'noopener');
@@ -2005,6 +1631,8 @@
             const modalColor = document.getElementById('product-modal-color');
             const modalMaterial = document.getElementById('product-modal-material');
             const modalLocation = document.getElementById('product-modal-location');
+            const sizeSelect = document.getElementById('product-modal-size-select');
+            const colorSelect = document.getElementById('product-modal-color-select');
             const callLink = document.getElementById('product-modal-call');
             const whatsappLink = document.getElementById('product-modal-whatsapp');
 
@@ -2020,6 +1648,12 @@
             if (modalColor) modalColor.textContent = item.color || '—';
             if (modalMaterial) modalMaterial.textContent = item.material || '—';
             if (modalLocation) modalLocation.textContent = item.location || '—';
+            if (sizeSelect) {
+                sizeSelect.innerHTML = `<option value="${item.size || '—'}">${item.size || '—'}</option>`;
+            }
+            if (colorSelect) {
+                colorSelect.innerHTML = `<option value="${item.color || '—'}">${item.color || '—'}</option>`;
+            }
 
             const safePhone = (item.sellerPhone || '').replace(/\D/g, '');
             if (callLink) callLink.href = safePhone ? `tel:${safePhone}` : 'tel:';
@@ -2033,7 +1667,6 @@
                 modal.dataset.price = String(item.price || '');
                 modal.dataset.size = item.size || '—';
                 modal.dataset.image = item.image || '';
-                modal.dataset.tryon = item.tryon || item.image || '';
                 modal.dataset.tags = item.tags || '';
                 modal.dataset.category = item.category || '';
                 modal.dataset.description = item.description || '';
@@ -2043,8 +1676,47 @@
                 modal.dataset.location = item.location || '';
                 modal.dataset.sellerPhone = item.sellerPhone || '';
                 modal.dataset.productId = item.productId || '';
+                modal.dataset.variantId = item.variantId || '';
+                modal.dataset.printifyVariantId = item.printifyVariantId || '';
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
+                // Tab logic for details/reviews (event delegation, always works)
+                const detailsTab = document.getElementById('product-details-tab');
+                const reviewsTab = document.getElementById('product-reviews-tab');
+                const detailsCard = document.getElementById('product-details-card');
+                const reviewsCard = document.getElementById('product-reviews-card');
+                const tabsContainer = document.getElementById('product-modal-tabs');
+                if (detailsTab && reviewsTab && detailsCard && reviewsCard && tabsContainer) {
+                    // Remove all previous listeners
+                    const newTabs = tabsContainer.cloneNode(true);
+                    tabsContainer.parentNode.replaceChild(newTabs, tabsContainer);
+                    const newDetailsTab = newTabs.querySelector('#product-details-tab');
+                    const newReviewsTab = newTabs.querySelector('#product-reviews-tab');
+                    newTabs.addEventListener('click', function (e) {
+                        if (e.target === newDetailsTab) {
+                            newDetailsTab.classList.add('bg-[#adff2f]', 'text-black');
+                            newReviewsTab.classList.remove('bg-[#adff2f]', 'text-black');
+                            detailsCard.classList.remove('hidden');
+                            reviewsCard.classList.add('hidden');
+                        } else if (e.target === newReviewsTab) {
+                            newReviewsTab.classList.add('bg-[#adff2f]', 'text-black');
+                            newDetailsTab.classList.remove('bg-[#adff2f]', 'text-black');
+                            reviewsCard.classList.remove('hidden');
+                            detailsCard.classList.add('hidden');
+                        }
+                    });
+                    // Always reset to details tab on modal open
+                    newDetailsTab.classList.add('bg-[#adff2f]', 'text-black');
+                    newReviewsTab.classList.remove('bg-[#adff2f]', 'text-black');
+                    detailsCard.classList.remove('hidden');
+                    reviewsCard.classList.add('hidden');
+                }
+                // Load and render reviews for this product
+                setTimeout(async () => {
+                    const { reviews, avg, count } = await loadProductReviews(item.productId);
+                    renderProductReviewsUI({ reviews, avg, count });
+                    setupReviewForm(item.productId);
+                }, 0);
             }
         }
 
@@ -2069,7 +1741,7 @@
 
             const { data } = await supabaseClient
                 .from('cart_items')
-                .upsert({ user_id: currentUser.id, product_id: item.productId, quantity: item.quantity }, { onConflict: 'user_id,product_id' })
+                .insert({ user_id: currentUser.id, product_id: item.productId, variant_id: item.variantId || null, printify_variant_id: item.printifyVariantId || null, supplier_type: item.supplierType || 'printify', supplier_product_id: item.supplierProductId || null, quantity: item.quantity })
                 .select('id')
                 .single();
             if (data?.id) item.id = data.id;
@@ -2115,7 +1787,6 @@
                     <div class="text-right">
                         <p class="text-[#adff2f] font-bold">${formatMoney(item.price)}</p>
                         <p class="text-xs text-zinc-500">Line: ${formatMoney(item.price * (item.quantity || 0))}</p>
-                        <button class="text-xs text-zinc-300 hover:text-white" data-tryon-id="${item.id}">Try On</button>
                         <button class="text-xs text-zinc-400 hover:text-white" data-remove-id="${item.id}">Remove</button>
                     </div>
                 `;
@@ -2164,14 +1835,6 @@
                 });
             });
 
-            itemsContainer.querySelectorAll('[data-tryon-id]').forEach((btn) => {
-                btn.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    const id = btn.getAttribute('data-tryon-id');
-                    openTryOnFromCart(id);
-                });
-            });
-
             itemsContainer.querySelectorAll('[data-cart-id]').forEach((card) => {
                 card.addEventListener('click', (event) => {
                     if (event.target.closest('button')) return;
@@ -2182,7 +1845,6 @@
                 });
             });
 
-            renderTryOnItemOptions();
         }
 
         function renderWishlist() {
@@ -2236,10 +1898,8 @@
         }
 
         function updateAuthUI() {
-            const sellBtn = document.getElementById('sell-nav-btn');
             const loginBtn = document.getElementById('login-nav-btn');
             const logoutBtn = document.getElementById('logout-nav-btn');
-            if (sellBtn) sellBtn.classList.toggle('hidden', !isLoggedIn);
             if (loginBtn) loginBtn.classList.toggle('hidden', isLoggedIn);
             if (logoutBtn) logoutBtn.classList.toggle('hidden', !isLoggedIn);
         }
@@ -2248,20 +1908,15 @@
             const nameEl = document.getElementById('profile-name');
             const metaEl = document.getElementById('profile-meta');
             const emailEl = document.getElementById('profile-email');
-            const phoneEl = document.getElementById('profile-phone');
-            const phoneInput = document.getElementById('profile-phone-input');
 
-            const safeName = name || 'CampusSwap Member';
-            const safeMeta = location ? `Location: ${location}` : 'Student at State University';
+            const safeName = name || 'VEYRO Member';
+            const safeMeta = location ? `Location: ${location}` : 'VEYRO customer';
             const safeEmail = email ? `Email: ${email}` : 'Email: —';
             const safePhone = phone ? `Phone: ${phone}` : 'Phone: —';
-            currentProfilePhone = phone || '';
 
             if (nameEl) nameEl.textContent = safeName;
             if (metaEl) metaEl.textContent = safeMeta;
             if (emailEl) emailEl.textContent = safeEmail;
-            if (phoneEl) phoneEl.textContent = safePhone;
-            if (phoneInput) phoneInput.value = phone || '';
         }
 
         async function upsertUserProfile({ user, name, email, phone, location }) {
@@ -2291,7 +1946,7 @@
                 .single();
 
             if (error || !data) {
-                setProfileUI({ name: user.user_metadata?.name, email: user.email, phone: null });
+                setProfileUI({ name: user.user_metadata?.name, email: user.email });
                 return;
             }
 
@@ -2325,6 +1980,7 @@
                 updateAuthUI();
                 if (currentUser) {
                     await loadProfile(currentUser);
+                    document.dispatchEvent(new Event('veyro-auth-ready'));
                 } else {
                     setProfileUI({});
                 }
@@ -2341,6 +1997,7 @@
                     loadCartFromSupabase();
                     loadWishlistFromSupabase();
                     loadProductsFromSupabase();
+                    document.dispatchEvent(new Event('veyro-auth-ready'));
                 } else {
                     setProfileUI({});
                     cartItems.length = 0;
@@ -2354,21 +2011,29 @@
         function buildProductPayloadFromModal(modal) {
             const priceValue = modal ? modal.dataset.price : '';
             const price = parseFloat(priceValue || '0');
+            const sizeSelect = document.getElementById('product-modal-size-select');
+            const colorSelect = document.getElementById('product-modal-color-select');
+            const quantityInput = document.getElementById('product-modal-quantity');
             return {
                 productId: modal ? modal.dataset.productId : '',
                 name: modal ? modal.dataset.product : '',
                 price: Number.isFinite(price) ? price : 0,
                 tags: modal ? modal.dataset.tags || '' : '',
                 category: modal ? modal.dataset.category || '' : '',
-                size: modal ? modal.dataset.size || '' : '',
+                size: sizeSelect?.value || (modal ? modal.dataset.size || '' : ''),
+                color: colorSelect?.value || (modal ? modal.dataset.color || '' : ''),
+                quantity: quantityInput?.value || '1',
+                variantId: modal ? modal.dataset.variantId || '' : '',
+                printifyVariantId: modal ? modal.dataset.printifyVariantId || '' : '',
                 condition: modal ? modal.dataset.condition || '' : '',
-                color: modal ? modal.dataset.color || '' : '',
                 material: modal ? modal.dataset.material || '' : '',
                 location: modal ? modal.dataset.location || '' : '',
                 seller_phone: modal ? modal.dataset.sellerPhone || '' : '',
                 description: modal ? modal.dataset.description || '' : '',
                 image_url: modal ? modal.dataset.image || '' : '',
-                tryon_url: modal ? modal.dataset.tryon || '' : ''
+                supplier_type: modal ? modal.dataset.supplierType || 'printify' : 'printify',
+                supplier_product_id: modal ? modal.dataset.supplierProductId || '' : '',
+                supplier_url: modal ? modal.dataset.supplierUrl || '' : ''
             };
         }
 
@@ -2402,8 +2067,7 @@
                     location: payload.location,
                     seller_phone: payload.seller_phone,
                     description: payload.description,
-                    image_url: payload.image_url,
-                    tryon_url: payload.tryon_url
+                    image_url: payload.image_url
                 })
                 .select('id')
                 .single();
@@ -2418,7 +2082,7 @@
 
         function createProductCard(product, source) {
             const card = document.createElement('div');
-            card.className = 'group cursor-pointer';
+            card.className = 'group cursor-pointer relative';
             if (source) card.dataset.source = source;
             card.dataset.productId = product.id || '';
             card.dataset.product = product.name || 'Product';
@@ -2427,19 +2091,28 @@
             if (product.category) card.dataset.category = product.category;
             card.dataset.description = product.description || 'Details coming soon.';
             card.dataset.size = product.size || '—';
+            card.dataset.sizes = product.sizes || product.size || '—';
+            card.dataset.colors = product.colors || product.color || '—';
+            card.dataset.variantId = product.variant_id || '';
+            card.dataset.printifyVariantId = product.printify_variant_id || '';
+            card.dataset.supplierType = product.supplier_type || 'printify';
+            card.dataset.supplierProductId = product.supplier_product_id || product.printify_product_id || '';
+            card.dataset.supplierUrl = product.supplier_url || '';
             card.dataset.condition = product.condition || '—';
             card.dataset.color = product.color || '—';
             card.dataset.material = product.material || '—';
             card.dataset.location = product.location || '—';
             card.dataset.sellerPhone = product.seller_phone || '';
-            card.dataset.tryon = product.tryon_url || product.image_url || '';
 
-            const imageSrc = product.image_url || product.tryon_url || '';
+            const imageSrc = product.image_url || '';
             card.innerHTML = `
-                <div class="aspect-[3/4] bg-zinc-900 rounded-2xl mb-4 overflow-hidden border border-zinc-800 hover:border-[#adff2f] transition">
+                <div class="aspect-[3/4] bg-zinc-900 rounded-2xl mb-4 overflow-hidden border border-zinc-800 hover:border-[#adff2f] transition relative">
                     ${imageSrc ? `<img src="${imageSrc}" class="w-full h-full object-cover group-hover:scale-105 transition" alt="${product.name || 'Product'}">` : ''}
                 </div>
-                <h3 class="font-bold">${product.name || 'Product'}</h3>
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="font-bold">${product.name || 'Product'}</h3>
+                    <span class="text-[10px] uppercase tracking-wider text-zinc-500">${product.supplier_type || 'printify'}</span>
+                </div>
                 <p class="text-[#adff2f]">${formatMoney(product.price || 0)}</p>
             `;
             return card;
@@ -2459,17 +2132,11 @@
                 .from('products')
                 .select('*')
                 .order('created_at', { ascending: false });
-
             if (error) {
                 console.warn('Products load failed.', error);
                 return;
             }
-
-            renderSupabaseProducts(data || []);
-            if (currentUser) {
-                listingsCount = (data || []).filter(item => item.user_id === currentUser.id).length;
-                updateListingsCount();
-            }
+            renderSupabaseProducts(data);
         }
 
         function buildCartItemFromProduct(product, cartRow) {
@@ -2479,6 +2146,8 @@
                 name: product.name || 'Product',
                 price: Number(product.price) || 0,
                 size: product.size || '—',
+                variantId: cartRow?.variant_id || product.variant_id || null,
+                printifyVariantId: cartRow?.printify_variant_id || product.printify_variant_id || null,
                 image: product.image_url || '',
                 category: product.category || '',
                 quantity: cartRow?.quantity || 1,
@@ -2489,7 +2158,9 @@
                 location: product.location || '—',
                 sellerPhone: product.seller_phone || '',
                 tags: product.tags || '',
-                tryon: product.tryon_url || product.image_url || ''
+                supplierType: cartRow?.supplier_type || product.supplier_type || 'printify',
+                supplierProductId: cartRow?.supplier_product_id || product.supplier_product_id || product.printify_product_id || '',
+                supplierUrl: product.supplier_url || ''
             };
         }
 
@@ -2497,7 +2168,7 @@
             if (!currentUser) return;
             const { data, error } = await supabaseClient
                 .from('cart_items')
-                .select('id, quantity, product:products(*)')
+                .select('id, quantity, variant_id, printify_variant_id, supplier_type, supplier_product_id, product:products(*)')
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -2536,163 +2207,6 @@
             renderWishlist();
         }
 
-        function updateListingsCount() {
-            const count = document.getElementById('active-listings-count');
-            if (count) count.textContent = String(listingsCount);
-        }
-
-        async function handleSellSubmit(event) {
-            event.preventDefault();
-            if (!isLoggedIn) {
-                alert('Please log in or sign up to sell an item.');
-                showPage('login-page');
-                return;
-            }
-
-            const name = document.getElementById('sell-name').value.trim();
-            const priceRaw = document.getElementById('sell-price').value.trim();
-            const tags = document.getElementById('sell-tags').value.trim();
-            const category = document.getElementById('sell-category').value.trim();
-            const size = document.getElementById('sell-size').value.trim();
-            const condition = document.getElementById('sell-condition').value.trim();
-            const color = document.getElementById('sell-color').value.trim();
-            const material = document.getElementById('sell-material').value.trim();
-            const location = document.getElementById('sell-location').value.trim();
-            const phone = document.getElementById('sell-phone').value.trim();
-            const imageUrl = document.getElementById('sell-image').value.trim();
-            const imageInput = document.getElementById('sell-images');
-            const imageFile = imageInput && imageInput.files ? imageInput.files[0] : null;
-            const description = document.getElementById('sell-description').value.trim();
-
-            const phoneToUse = currentProfilePhone || phone;
-
-            if (!name || !priceRaw || !phoneToUse || !description) {
-                alert('Please fill in the required fields.');
-                return;
-            }
-
-            const price = parseFloat(priceRaw);
-            const safePrice = Number.isFinite(price) ? price.toFixed(2).replace(/\.00$/, '') : priceRaw;
-            const placeholderImage =
-                'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=500&q=80';
-            const imageFileUrl = imageFile ? URL.createObjectURL(imageFile) : '';
-            const grid = document.getElementById('product-grid');
-
-            if (currentUser && (location || phoneToUse)) {
-                upsertUserProfile({ user: currentUser, location, phone: phoneToUse });
-                loadProfile(currentUser);
-            }
-
-            if (!grid) return;
-
-            const baseTags = tags || name.toLowerCase();
-            const imageForDb = imageUrl || placeholderImage;
-            const tryonForDb = imageUrl || placeholderImage;
-            const imageForUi = imageFileUrl || imageUrl || placeholderImage;
-
-            let productId = '';
-            try {
-                if (currentUser) {
-                    const { data, error } = await supabaseClient
-                        .from('products')
-                        .insert({
-                            user_id: currentUser.id,
-                            name,
-                            price: Number(safePrice) || 0,
-                            tags: category ? `${baseTags} ${category}` : baseTags,
-                            category: category || null,
-                            description,
-                            size: size || null,
-                            condition: condition || null,
-                            color: color || null,
-                            material: material || null,
-                            location: location || null,
-                            seller_phone: phoneToUse,
-                            image_url: imageForDb,
-                            tryon_url: tryonForDb
-                        })
-                        .select('*')
-                        .single();
-
-                    if (error) throw error;
-                    if (data) {
-                        productId = data.id;
-                        const card = createProductCard(
-                            {
-                                ...data,
-                                seller_phone: phoneToUse,
-                                image_url: imageForUi,
-                                tryon_url: imageForUi
-                            },
-                            'supabase'
-                        );
-                        grid.prepend(card);
-                        listingsCount += 1;
-                        updateListingsCount();
-                    }
-                }
-
-                event.target.reset();
-                alert('Item listed successfully!');
-                showPage('home-page');
-            } catch (error) {
-                alert(error?.message || 'Listing failed. Please try again.');
-            }
-        }
-
-        function openTryOnModal() {
-            const productModal = document.getElementById('product-modal');
-            const tryonName = document.getElementById('tryon-modal-name');
-            const productName = productModal ? productModal.dataset.product : 'Try-On Studio';
-            const overlaySrc = productModal ? (productModal.dataset.tryon || productModal.dataset.image) : '';
-            const tags = productModal ? (productModal.dataset.tags || '') : '';
-
-            if (tryonName) tryonName.textContent = productName;
-
-            tryOnState.returnPage = getActivePageId();
-            showPage('tryon-page');
-            closeProductModal();
-            setAutoFitEnabled(true);
-
-            setTryOnItemData({
-                id: null,
-                name: productName,
-                image: overlaySrc,
-                tryon: overlaySrc,
-                tags: tags
-            });
-            startTryOnCamera();
-        }
-
-        function closeTryOnModal() {
-            stopTryOnCamera();
-            showPage(tryOnState.returnPage || 'home-page');
-        }
-
-        function openTryOnStudio() {
-            const tryonName = document.getElementById('tryon-modal-name');
-            const overlay = document.getElementById('tryon-overlay');
-            if (tryonName) tryonName.textContent = 'Try-On Studio';
-            tryOnState.returnPage = getActivePageId();
-            showPage('tryon-page');
-            resetTryOnControls();
-            if (overlay) overlay.src = '';
-            renderTryOnItemOptions();
-            setAutoFitEnabled(true);
-            startTryOnCamera();
-        }
-
-        function openTryOnFromCart(itemId) {
-            const item = cartItems.find(entry => entry.id === itemId);
-            if (!item) return;
-            tryOnState.returnPage = 'cart-page';
-            showPage('tryon-page');
-            renderTryOnItemOptions();
-            setTryOnItemData(item);
-            setAutoFitEnabled(true);
-            startTryOnCamera();
-        }
-
         // Search + Chatbot
         function getProductCards() {
             return Array.from(document.querySelectorAll('#product-grid .group'));
@@ -2702,111 +2216,14 @@
             return (text || '').toLowerCase().trim();
         }
 
-        function parsePriceQuery(query) {
-            const q = normalizeText(query);
-            const numberMatch = q.match(/(\d+)/);
-            if (!numberMatch) return null;
-
-            const value = parseInt(numberMatch[1], 10);
-            const isMax = /(under|less|below|<=|<)/.test(q) || (q.includes('$') && !/(over|above|more|>=|>)/.test(q));
-            const isMin = /(over|above|more|>=|>)/.test(q);
-
-            if (isMin) return { type: 'min', value };
-            if (isMax) return { type: 'max', value };
-            return null;
-        }
-
-        function escapeRegExp(value) {
-            return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        }
-
-        function parseSearchFields(query) {
-            let remaining = normalizeText(query);
-
-            const extract = (pattern) => {
-                const match = remaining.match(pattern);
-                if (!match) return null;
-                const value = match[1].trim();
-                remaining = remaining.replace(match[0], ' ').replace(/\s{2,}/g, ' ').trim();
-                return value;
-            };
-
-            const location = extract(/(?:location:|in)\s+([a-z0-9][a-z0-9\s-]*)/);
-            const size = extract(/(?:size:|size)\s+([a-z0-9.+-]+)/);
-            const color = extract(/(?:color:|color)\s+([a-z0-9][a-z0-9\s-]*)/);
-            const material = extract(/(?:material:|material)\s+([a-z0-9][a-z0-9\s-]*)/);
-            const condition = extract(/(?:condition:|condition)\s+([a-z0-9][a-z0-9\s-]*)/);
-            const category = extract(/(?:category:|category|area:|area)\s+([a-z0-9][a-z0-9\s-]*)/);
-            const tagValue = extract(/(?:tag:|tags:|tag|tags)\s+([a-z0-9][a-z0-9\s,-]*)/);
-
-            const tags = tagValue
-                ? tagValue.split(',').map(item => item.trim()).filter(Boolean)
-                : [];
-
-            remaining = remaining
-                .replace(/(?:under|less|below|over|above|more|>=|<=|>|<)?\s*(?:₹|\$)?\s*\d+/g, ' ')
-                .replace(/\s{2,}/g, ' ')
-                .trim();
-
-            return {
-                remaining,
-                location,
-                size,
-                color,
-                material,
-                condition,
-                category,
-                tags
-            };
-        }
-
         function getMatchedCards(query) {
             const q = normalizeText(query);
-            const priceRule = parsePriceQuery(q);
-            const fields = parseSearchFields(q);
-            const cleanedQuery = fields.remaining;
-
             return getProductCards().filter(card => {
                 const name = normalizeText(card.dataset.product);
                 const tags = normalizeText(card.dataset.tags);
                 const location = normalizeText(card.dataset.location);
-                const size = normalizeText(card.dataset.size);
-                const color = normalizeText(card.dataset.color);
-                const material = normalizeText(card.dataset.material);
-                const condition = normalizeText(card.dataset.condition);
-                const category = normalizeText(card.dataset.category);
                 const description = normalizeText(card.dataset.description);
-                const price = parseFloat(card.dataset.price || '0');
-                const textMatch = !cleanedQuery
-                    || name.includes(cleanedQuery)
-                    || tags.includes(cleanedQuery)
-                    || description.includes(cleanedQuery)
-                    || location.includes(cleanedQuery);
-                const locationMatch = !fields.location || location.includes(fields.location);
-                const sizeMatch = !fields.size || size.includes(fields.size);
-                const colorMatch = !fields.color || color.includes(fields.color);
-                const materialMatch = !fields.material || material.includes(fields.material);
-                const conditionMatch = !fields.condition || condition.includes(fields.condition);
-                const categoryMatch = !fields.category
-                    || category.includes(fields.category)
-                    || tags.includes(fields.category);
-                const tagMatch = fields.tags.length === 0
-                    || fields.tags.every(tag => tags.includes(tag));
-
-                let priceMatch = true;
-                if (priceRule) {
-                    priceMatch = priceRule.type === 'min' ? price >= priceRule.value : price <= priceRule.value;
-                }
-
-                return textMatch
-                    && priceMatch
-                    && locationMatch
-                    && sizeMatch
-                    && colorMatch
-                    && materialMatch
-                    && conditionMatch
-                    && categoryMatch
-                    && tagMatch;
+                return !q || name.includes(q) || tags.includes(q) || description.includes(q) || location.includes(q);
             });
         }
 
@@ -2815,13 +2232,11 @@
             const matches = getMatchedCards(query);
             const matchSet = new Set(matches);
             let visibleCount = 0;
-
             cards.forEach(card => {
                 const match = matchSet.has(card);
                 card.classList.toggle('hidden', !match);
                 if (match) visibleCount += 1;
             });
-
             const emptyState = document.getElementById('search-empty');
             if (emptyState) {
                 emptyState.classList.toggle('hidden', visibleCount > 0);
@@ -2847,24 +2262,20 @@
 
         function getMatchesSummary(query) {
             const q = normalizeText(query);
-            const fields = parseSearchFields(q);
             const matches = getMatchedCards(q);
 
             if (!q) return 'Tell me what you are looking for, like sneakers or jacket.';
             if (matches.length === 0) {
-                return fields.location
-                    ? `No matching products in ${fields.location}. Try a different location or product.`
-                    : 'No matching products. Try tee, jacket, pants, sneakers, or under ₹50.';
+                return 'No matching pieces. Try oversized tee, hoodie, pants, or under ₹999.';
             }
 
             const names = matches.slice(0, 3).map(card => card.dataset.product);
             const moreCount = matches.length - names.length;
-            const locationLabel = fields.location ? ` in ${fields.location}` : '';
-            return `I found ${matches.length} item(s)${locationLabel}: ${names.join(', ')}${moreCount > 0 ? ` and ${moreCount} more` : ''}.`;
+            return `I found ${matches.length} item(s): ${names.join(', ')}${moreCount > 0 ? ` and ${moreCount} more` : ''}.`;
         }
 
         function renderChatSuggestions() {
-            const suggestions = ['sneakers', 'jacket', 'pants', 'tee', 'under ₹50', 'over ₹80'];
+            const suggestions = ['oversized t-shirts', 'hoodies', 'pants', 'under 999', 'new arrivals'];
             const container = document.getElementById('chatbot-suggestions');
             if (!container) return;
             container.innerHTML = '';
@@ -2899,40 +2310,14 @@
             }
         }
 
-        function handleOmegaNavigation(query) {
-            const q = normalizeText(query);
-            const targets = [
-                { patterns: ['home', 'shop', 'store', 'products'], page: 'home-page', label: 'Home' },
-                { patterns: ['sell', 'list', 'list item', 'start selling'], page: 'sell-page', label: 'Sell' },
-                { patterns: ['cart', 'bag', 'checkout'], page: 'cart-page', label: 'Cart' },
-                { patterns: ['wishlist', 'liked', 'favorites'], page: 'liked-page', label: 'Wishlist' },
-                { patterns: ['contact', 'support', 'help'], page: 'contact-page', label: 'Contact' },
-                { patterns: ['profile', 'account', 'settings'], page: 'profile-page', label: 'Profile' },
-                { patterns: ['try-on', 'tryon', 'camera'], page: 'tryon-page', label: 'Try-On' },
-                { patterns: ['login', 'log in', 'sign in'], page: 'login-page', label: 'Login' },
-                { patterns: ['signup', 'sign up', 'register', 'create account'], page: 'signup-page', label: 'Signup' }
-            ];
-
-            const target = targets.find(entry => entry.patterns.some(pattern => q.includes(pattern)));
-            if (!target) return null;
-
-            showPage(target.page);
-            return target.label;
-        }
-
         function handleChatSend() {
             const input = document.getElementById('chatbot-input');
             if (!input) return;
             const value = input.value.trim();
             if (!value) return;
             addChatMessage(value, true);
-            const navLabel = handleOmegaNavigation(value);
-            if (navLabel) {
-                addChatMessage(`Opening ${navLabel}.`, false);
-            } else {
-                handleSearchInput(value, { syncInputs: false });
-                addChatMessage(getMatchesSummary(value), false);
-            }
+            handleSearchInput(value, { syncInputs: false });
+            addChatMessage(getMatchesSummary(value), false);
             input.value = '';
         }
 
@@ -2999,7 +2384,7 @@
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('CampusSwap loaded successfully');
+            console.log('VEYRO loaded successfully');
             // Show intro page by default
             showPage('intro-page');
 
@@ -3007,10 +2392,10 @@
             loadProductsFromSupabase();
 
             updateAuthUI();
-            updateListingsCount();
             renderCart();
             renderWishlist();
-            renderTryOnItemOptions();
+            const checkoutForm = document.getElementById('checkout-form');
+            if (checkoutForm) checkoutForm.addEventListener('submit', submitCheckout);
 
             const searchInput = document.getElementById('product-search');
             const searchMobile = document.getElementById('product-search-mobile');
@@ -3019,6 +2404,47 @@
             }
             if (searchMobile) {
                 searchMobile.addEventListener('input', (e) => handleSearchInput(e.target.value));
+            }
+
+            // Location icon click: fetch user location and filter products by region
+            const locationBtn = document.getElementById('location-search-btn');
+            if (locationBtn) {
+                locationBtn.addEventListener('click', async function () {
+                    if (!navigator.geolocation) {
+                        showNotification('Geolocation is not supported by your browser.', 'error');
+                        return;
+                    }
+                    showNotification('Detecting your location...', 'info');
+                    navigator.geolocation.getCurrentPosition(async (position) => {
+                        const { latitude, longitude } = position.coords;
+                        // Use Nominatim reverse geocoding API (OpenStreetMap) with English language
+                        try {
+                            const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+                            const response = await fetch(url, { headers: { 'Accept': 'application/json', 'Accept-Language': 'en' } });
+                            if (!response.ok) throw new Error('Failed to get region');
+                            const data = await response.json();
+                            // Try to get city, town, or village, fallback to state
+                            let region = data.address.city || data.address.town || data.address.village || data.address.state || '';
+                            // If region is not in English, fallback to display_name and extract first English word
+                            if (region && /[\u0C00-\u0C7F]/.test(region)) { // Telugu unicode range
+                                // Try to extract English from display_name
+                                const displayName = data.display_name || '';
+                                const englishMatch = displayName.match(/[A-Za-z][A-Za-z\s]+/);
+                                if (englishMatch) region = englishMatch[0].trim();
+                            }
+                            if (region) {
+                                showNotification(`Showing products near ${region}.`, 'success');
+                                handleSearchInput(region, { syncInputs: false });
+                            } else {
+                                showNotification('Could not determine your region.', 'error');
+                            }
+                        } catch (err) {
+                            showNotification('Failed to get your region.', 'error');
+                        }
+                    }, (error) => {
+                        showNotification('Location access denied or unavailable.', 'error');
+                    });
+                });
             }
 
             const toggle = document.getElementById('chatbot-toggle');
@@ -3051,9 +2477,6 @@
                 });
             }
 
-            const sellForm = document.getElementById('sell-form');
-            if (sellForm) sellForm.addEventListener('submit', handleSellSubmit);
-
             const productGrid = document.getElementById('product-grid');
             if (productGrid) {
                 productGrid.addEventListener('click', (event) => {
@@ -3066,24 +2489,9 @@
             const modalClose = document.getElementById('product-modal-close');
             const modalBackdrop = document.getElementById('product-modal-backdrop');
             const modalAdd = document.getElementById('product-modal-add');
-            const modalTryOn = document.getElementById('product-modal-tryon');
             const modalCall = document.getElementById('product-modal-call');
             const modalWhatsapp = document.getElementById('product-modal-whatsapp');
             const modalLike = document.getElementById('product-modal-like');
-            const tryonClose = document.getElementById('tryon-modal-close');
-            const tryonStart = document.getElementById('tryon-start');
-            const tryonStop = document.getElementById('tryon-stop');
-            const tryonSnap = document.getElementById('tryon-snap');
-            const tryonReset = document.getElementById('tryon-reset');
-            const tryonFile = document.getElementById('tryon-file');
-            const tryonScale = document.getElementById('tryon-scale');
-            const tryonRotate = document.getElementById('tryon-rotate');
-            const tryonOffsetX = document.getElementById('tryon-offset-x');
-            const tryonOffsetY = document.getElementById('tryon-offset-y');
-            const tryonSelect = document.getElementById('tryon-item-select');
-            const tryonApply = document.getElementById('tryon-item-apply');
-            const tryonAuto = document.getElementById('tryon-auto');
-            const cartTryOnBtn = document.getElementById('cart-tryon-btn');
             if (modalClose) modalClose.addEventListener('click', closeProductModal);
             if (modalBackdrop) modalBackdrop.addEventListener('click', closeProductModal);
             if (modalAdd) {
@@ -3093,80 +2501,8 @@
                     addToCart(name);
                 });
             }
-            if (modalTryOn) modalTryOn.addEventListener('click', openTryOnModal);
             if (modalCall) modalCall.addEventListener('click', handleCallSellerClick);
             if (modalWhatsapp) modalWhatsapp.addEventListener('click', handleWhatsappSellerClick);
-            if (tryonClose) tryonClose.addEventListener('click', closeTryOnModal);
-            if (tryonStart) tryonStart.addEventListener('click', startTryOnCamera);
-            if (tryonStop) tryonStop.addEventListener('click', stopTryOnCamera);
-            if (tryonSnap) tryonSnap.addEventListener('click', captureTryOnSnapshot);
-            if (tryonReset) tryonReset.addEventListener('click', resetTryOnControls);
-            if (tryonFile) {
-                tryonFile.addEventListener('change', (event) => {
-                    const file = event.target.files && event.target.files[0];
-                    if (!file) return;
-                    if (tryOnState.overlayUrl) URL.revokeObjectURL(tryOnState.overlayUrl);
-                    tryOnState.overlayUrl = URL.createObjectURL(file);
-                    applyTryOnOverlay(tryOnState.overlayUrl);
-                });
-            }
-            if (tryonScale) {
-                tryonScale.addEventListener('input', (event) => {
-                    disableAutoFitOnManual();
-                    tryOnState.scale = parseFloat(event.target.value);
-                    updateOverlayTransform();
-                });
-            }
-            if (tryonRotate) {
-                tryonRotate.addEventListener('input', (event) => {
-                    disableAutoFitOnManual();
-                    tryOnState.rotate = parseFloat(event.target.value);
-                    updateOverlayTransform();
-                });
-            }
-            if (tryonOffsetX) {
-                tryonOffsetX.addEventListener('input', (event) => {
-                    disableAutoFitOnManual();
-                    tryOnState.offsetX = parseFloat(event.target.value);
-                    updateOverlayTransform();
-                });
-            }
-            if (tryonOffsetY) {
-                tryonOffsetY.addEventListener('input', (event) => {
-                    disableAutoFitOnManual();
-                    tryOnState.offsetY = parseFloat(event.target.value);
-                    updateOverlayTransform();
-                });
-            }
-            if (tryonSelect) {
-                tryonSelect.addEventListener('change', (event) => {
-                    const id = event.target.value;
-                    if (id) applyTryOnItemById(id);
-                });
-            }
-            if (tryonApply) {
-                tryonApply.addEventListener('click', () => {
-                    const id = tryonSelect ? tryonSelect.value : '';
-                    if (id) applyTryOnItemById(id);
-                });
-            }
-            if (tryonAuto) {
-                tryonAuto.addEventListener('change', (event) => {
-                    setAutoFitEnabled(event.target.checked);
-                });
-            }
-            if (cartTryOnBtn) {
-                cartTryOnBtn.addEventListener('click', () => {
-                    if (cartItems.length === 0) {
-                        alert('Your cart is empty. Add items to try them on.');
-                        return;
-                    }
-                    openTryOnStudio();
-                    renderTryOnItemOptions();
-                    if (cartItems[0]) applyTryOnItemById(cartItems[0].id);
-                });
-            }
-            setupTryOnDrag();
             if (modalLike) {
                 modalLike.addEventListener('click', async () => {
                     const modal = document.getElementById('product-modal');
@@ -3186,7 +2522,6 @@
                         price: parseFloat(modal.dataset.price || '0'),
                         size,
                         image: modal.dataset.image || '',
-                        tryon: modal.dataset.tryon || modal.dataset.image || '',
                         productId: productId || null,
                         category: modal.dataset.category || '',
                         tags: modal.dataset.tags || '',
@@ -3204,13 +2539,36 @@
 
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'Escape') {
-                    closeTryOnModal();
                     closeProductModal();
                 }
             });
 
             setupVoiceSearch();
         });
+    </script>
+
+    <!-- NOTIFICATION BOX -->
+    <div id="notification-box"
+        style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;min-width:260px;max-width:90vw;"
+        class="transition-all duration-300"></div>
+    <script>
+        function showNotification(message, type = 'info', duration = 3000) {
+            const box = document.getElementById('notification-box');
+            if (!box) return;
+            let bg = 'bg-[#adff2f] text-black border-2 border-[#adff2f]';
+            if (type === 'error') bg = 'bg-red-600 text-white border-2 border-red-400';
+            if (type === 'success') bg = 'bg-green-600 text-white border-2 border-green-400';
+            if (type === 'info') bg = 'bg-[#adff2f] text-black border-2 border-[#adff2f]';
+            box.className = `transition-all duration-300 px-8 py-5 rounded-2xl text-center font-bold text-base shadow-2xl ${bg}`;
+            box.textContent = message;
+            box.style.display = 'block';
+            box.style.opacity = '1';
+            clearTimeout(box._timeout);
+            box._timeout = setTimeout(() => {
+                box.style.opacity = '0';
+                setTimeout(() => { box.style.display = 'none'; }, 300);
+            }, duration);
+        }
     </script>
 </body>
 
