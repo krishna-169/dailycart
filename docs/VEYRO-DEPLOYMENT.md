@@ -33,6 +33,10 @@ Set these through the Supabase dashboard or CLI secret manager, not in source fi
 
 The exact payment provider and Cloudflare product remain configurable until real credentials are supplied.
 
+## Temporary cash on delivery
+
+Until an online payment provider is configured, deploy `create-cod-order`. The checkout exposes only Cash on Delivery and creates orders with `payment_status = 'cod_pending'`. Do not treat these orders as paid; confirm collection and update the order status through an authorized operations workflow.
+
 Deploy the functions from the repository root with the Supabase CLI after linking the intended project:
 
 ```text

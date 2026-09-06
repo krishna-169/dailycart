@@ -550,8 +550,16 @@
                         <input id="checkout-state" required type="text" placeholder="State" class="w-full p-4 rounded-xl" autocomplete="address-level1">
                         <input id="checkout-country" required type="text" value="India" placeholder="Country" class="w-full p-4 rounded-xl" autocomplete="country-name">
                     </div>
+                    <fieldset class="border border-zinc-800 rounded-xl p-4">
+                        <legend class="px-2 text-xs text-zinc-400">PAYMENT METHOD</legend>
+                        <label class="flex items-center gap-3 text-sm">
+                            <input type="radio" name="checkout-payment-method" value="cod" checked>
+                            <span>Cash on Delivery</span>
+                        </label>
+                        <p class="text-xs text-zinc-500 mt-2">Online payment is temporarily unavailable.</p>
+                    </fieldset>
                     <div id="checkout-message" class="text-sm" role="status"></div>
-                    <button id="checkout-submit" type="submit" class="w-full bg-[#adff2f] text-black py-4 rounded-xl font-bold">CONTINUE TO PAYMENT</button>
+                    <button id="checkout-submit" type="submit" class="w-full bg-[#adff2f] text-black py-4 rounded-xl font-bold">PLACE COD ORDER</button>
                 </form>
                 <div class="glass p-6 rounded-2xl h-fit">
                     <h3 class="heading text-lg mb-5">ORDER SUMMARY</h3>
@@ -1556,18 +1564,21 @@
                 quantity: Math.max(1, Number(item.quantity) || 1)
             }));
             submit.disabled = true;
-            message.textContent = 'Validating your order securely...';
+            message.textContent = 'Validating your COD order securely...';
             message.className = 'text-sm text-zinc-400';
-            const { data, error } = await supabaseClient.functions.invoke('create-payment-order', {
+            const { data, error } = await supabaseClient.functions.invoke('create-cod-order', {
                 body: { customer, items }
             });
             submit.disabled = false;
-            if (error || !data?.checkout_url) {
-                message.textContent = error?.message || 'Payment checkout is not configured yet.';
+            if (error || !data?.order_number) {
+                message.textContent = error?.message || 'COD order service is not configured yet.';
                 message.className = 'text-sm text-red-400';
                 return;
             }
-            window.location.assign(data.checkout_url);
+            message.textContent = `COD order ${data.order_number} placed successfully.`;
+            message.className = 'text-sm text-green-400';
+            cartItems.length = 0;
+            renderCart();
         }
 
         function buildWhatsappLink(phone, productName, price, size, shopName) {
